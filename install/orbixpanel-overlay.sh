@@ -2,8 +2,8 @@
 
 set -Eeuo pipefail
 
-ORBIXPANEL_BRANCH="${ORBIXPANEL_BRANCH:-orbixpanel-v1.0.0}"
-ORBIXPANEL_RAW_URL="https://raw.githubusercontent.com/OrbixtarTechnologies/hestiacp/${ORBIXPANEL_BRANCH}"
+ORBIXPANEL_BRANCH="${ORBIXPANEL_BRANCH:-main}"
+ORBIXPANEL_RAW_URL="https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar/${ORBIXPANEL_BRANCH}"
 HESTIA_ROOT="${HESTIA:-/usr/local/hestia}"
 
 if [[ ! -d "$HESTIA_ROOT/web" ]]; then
