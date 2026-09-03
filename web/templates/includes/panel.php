@@ -11,6 +11,7 @@
 				<!-- Logo / Home Button -->
 				<a href="/" class="top-bar-logo" title="<?= htmlentities($_SESSION["APP_NAME"]) ?>">
 					<img src="/images/logo-header.svg" alt="<?= htmlentities($_SESSION["APP_NAME"]) ?>" width="54" height="29">
+					<span class="control-panel-brand-name"><?= htmlentities($_SESSION["APP_NAME"]) ?></span>
 				</a>
 
 				<!-- Usage Statistics -->
@@ -266,6 +267,12 @@
 
 	<nav x-data="{ open: false }" class="main-menu">
 		<div class="container">
+			<div class="main-menu-heading">
+				<p class="main-menu-kicker"><?= _("Control panel") ?></p>
+				<p class="main-menu-context">
+					<?= $_SESSION["userContext"] === "admin" ? _("Server administration") : _("Hosting management") ?>
+				</p>
+			</div>
 			<button x-on:click="open = !open" type="button" class="main-menu-toggle">
 				<i class="fas fa-bars"></i>
 				<span
@@ -407,6 +414,13 @@
 				<?php } ?>
 
 			</ul>
+			<div class="main-menu-footer">
+				<i class="fas fa-shield-halved"></i>
+				<span>
+					<strong><?= htmlspecialchars($user) ?></strong>
+					<small><?= $_SESSION["userContext"] === "admin" ? _("Administrator") : _("Account owner") ?></small>
+				</span>
+			</div>
 		</div>
 	</nav>
 
