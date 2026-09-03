@@ -9,5 +9,5 @@ require $_SERVER["HESTIA"] . "/web/templates/includes/js.php";
 ?>
 </head>
 
-<body class="page-<?= strtolower($TAB) ?> lang-<?= $_SESSION["language"] ?>">
+<body class="page-<?= strtolower($TAB) ?> lang-<?= $_SESSION["language"] ?> context-<?= htmlspecialchars($_SESSION["userContext"] ?? "user") ?>">
 	<div class="app">
