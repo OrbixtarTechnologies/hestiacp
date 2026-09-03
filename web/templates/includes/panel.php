@@ -233,7 +233,7 @@
 							?>
 								<!-- Help / Documentation -->
 								<li class="top-bar-menu-item">
-									<a title="<?= _("Help") ?>" class="top-bar-menu-link" href="https://hestiacp.com/docs/" target="_blank" rel="noopener">
+					<a title="<?= _("Help") ?>" class="top-bar-menu-link" href="https://github.com/OrbixtarTechnologies/hestiacp#readme" target="_blank" rel="noopener">
 										<i class="fas fa-circle-question"></i>
 										<span class="top-bar-menu-link-label u-hide-desktop"><?= _("Help") ?></span>
 									</a>
@@ -295,7 +295,7 @@
 					?>
 					<li class="main-menu-item">
 						<a class="main-menu-item-link <?php if (in_array($TAB, ['USER', 'LOG'])) echo 'active' ?>" href="/list/user/" title="<?= _("Users") ?>: <?= $user_count;?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]['SUSPENDED_USERS'] ?>">
-							<p class="main-menu-item-label"><?= _("USER") ?><i class="fas fa-users"></i></p>
+							<p class="main-menu-item-label"><?= _("ACCOUNTS") ?><i class="fas fa-users"></i></p>
 							<ul class="main-menu-stats">
 								<li>
 									<?= _("Users") ?>: <?= htmlspecialchars($user_count) ?>
@@ -313,7 +313,7 @@
 					<?php if ($panel[$user]["WEB_DOMAINS"] != "0") { ?>
 						<li class="main-menu-item">
 							<a class="main-menu-item-link <?php if ($TAB == 'WEB') echo 'active' ?>" href="/list/web/" title="<?= _("Domains") ?>: <?= $panel[$user]['U_WEB_DOMAINS'] ?>&#13;<?= _("Aliases") ?>: <?= $panel[$user]['U_WEB_ALIASES'] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]['WEB_DOMAINS']=='unlimited' ? "∞" : $panel[$user]['WEB_DOMAINS'] ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]['SUSPENDED_WEB'] ?>">
-								<p class="main-menu-item-label"><?= _("WEB") ?><i class="fas fa-earth-americas"></i></p>
+								<p class="main-menu-item-label"><?= _("WEBSITES") ?><i class="fas fa-earth-americas"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Domains") ?>: <?= $panel[$user]["U_WEB_DOMAINS"] ?> / <?= $panel[$user]["WEB_DOMAINS"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["WEB_DOMAINS"] ?> (<?= $panel[$user]["SUSPENDED_WEB"] ?>)
@@ -351,7 +351,7 @@
 					<?php if ($panel[$user]["MAIL_DOMAINS"] != "0") { ?>
 						<li class="main-menu-item">
 							<a class="main-menu-item-link <?php if ($TAB == 'MAIL') echo 'active' ?>" href="/list/mail/" title="<?= _("Domains") ?>: <?= $panel[$user]['U_MAIL_DOMAINS'] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]['MAIL_DOMAINS']=='unlimited' ? "∞" : $panel[$user]['MAIL_DOMAINS'] ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]['SUSPENDED_MAIL'] ?>">
-								<p class="main-menu-item-label"><?= _("MAIL") ?><i class="fas fa-envelopes-bulk"></i></p>
+								<p class="main-menu-item-label"><?= _("EMAIL") ?><i class="fas fa-envelopes-bulk"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Domains") ?>: <?= $panel[$user]["U_MAIL_DOMAINS"] ?> / <?= $panel[$user]["MAIL_DOMAINS"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["MAIL_DOMAINS"] ?> (<?= $panel[$user]["SUSPENDED_MAIL"] ?>)
@@ -370,7 +370,7 @@
 					<?php if ($panel[$user]["DATABASES"] != "0") { ?>
 						<li class="main-menu-item">
 							<a class="main-menu-item-link <?php if ($TAB == 'DB') echo 'active' ?>" href="/list/db/" title="<?= _("Databases") ?>: <?= $panel[$user]['U_DATABASES'] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]['DATABASES']=='unlimited' ? "∞" : $panel[$user]['DATABASES'] ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]['SUSPENDED_DB'] ?>">
-								<p class="main-menu-item-label"><?= _("DB") ?><i class="fas fa-database"></i></p>
+								<p class="main-menu-item-label"><?= _("DATABASES") ?><i class="fas fa-database"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Databases") ?>: <?= $panel[$user]["U_DATABASES"] ?> / <?= $panel[$user]["DATABASES"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["DATABASES"] ?> (<?= $panel[$user]["SUSPENDED_DB"] ?>)
@@ -386,7 +386,7 @@
 					<?php if ($panel[$user]["CRON_JOBS"] != "0") { ?>
 						<li class="main-menu-item">
 							<a class="main-menu-item-link <?php if ($TAB == 'CRON') echo 'active' ?>" href="/list/cron/" title="<?= _("Jobs") ?>: <?= $panel[$user]['U_WEB_DOMAINS'] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]['CRON_JOBS']=='unlimited' ? "∞" : $panel[$user]['CRON_JOBS'] ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]['SUSPENDED_CRON'] ?>">
-								<p class="main-menu-item-label"><?= _("CRON") ?><i class="fas fa-clock"></i></p>
+								<p class="main-menu-item-label"><?= _("AUTOMATION") ?><i class="fas fa-clock"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Jobs") ?>: <?= $panel[$user]["U_CRON_JOBS"] ?> / <?= $panel[$user]["CRON_JOBS"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["CRON_JOBS"] ?> (<?= $panel[$user]["SUSPENDED_CRON"] ?>)
@@ -402,7 +402,7 @@
 					<?php if ($panel[$user]["BACKUPS"] != "0" || $panel[$user]["U_BACKUPS"] != "0" || $panel[$user]["BACKUPS_INCREMENTAL"] == "yes") { ?>
 						<li class="main-menu-item">
 							<a class="main-menu-item-link <?php if ($TAB == 'BACKUP') echo 'active' ?>" href="/list/backup/" title="<?= _("Backups") ?>: <?= $panel[$user]['U_BACKUPS'] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]['BACKUPS']=='unlimited' ? "∞" : $panel[$user]['BACKUPS'] ?>">
-								<p class="main-menu-item-label"><?= _("BACKUP") ?><i class="fas fa-file-zipper"></i></p>
+								<p class="main-menu-item-label"><?= _("BACKUPS") ?><i class="fas fa-file-zipper"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Backups") ?>: <?= $panel[$user]["U_BACKUPS"] ?> / <?= $panel[$user]["BACKUPS"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["BACKUPS"] ?>

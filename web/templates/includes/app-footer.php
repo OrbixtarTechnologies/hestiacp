@@ -1,8 +1,8 @@
 <footer class="app-footer">
 	<div class="container app-footer-inner">
 		<p>
-			<a href="https://hestiacp.com/" class="app-footer-link" target="_blank">
-				Hestia Control Panel
+			<a href="https://github.com/OrbixtarTechnologies/hestiacp" class="app-footer-link" target="_blank" rel="noopener">
+				OrbixPanel
 			</a>
 			v<?= $_SESSION["VERSION"] ?>
 		</p>
