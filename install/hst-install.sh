@@ -4,7 +4,7 @@
 #
 # OrbixPanel Installation Routine
 # Automatic OS detection wrapper
-# https://github.com/OrbixtarTechnologies/hestiacp
+# https://github.com/OrbixtarTechnologies/orbixtar
 #
 # Currently Supported Operating Systems:
 #
@@ -103,7 +103,7 @@ ensure_utf8_locale
 check_wget_curl() {
 	# Check wget
 	if [ -e '/usr/bin/wget' ]; then
-		wget -q https://raw.githubusercontent.com/OrbixtarTechnologies/hestiacp/main/install/hst-install-$type.sh -O hst-install-$type.sh
+		wget -q https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar/main/install/hst-install-$type.sh -O hst-install-$type.sh
 		if [ "$?" -eq '0' ]; then
 			bash hst-install-$type.sh "$@"
 			exit
@@ -116,7 +116,7 @@ check_wget_curl() {
 
 	# Check curl
 	if [ -e '/usr/bin/curl' ]; then
-		curl -s -O https://raw.githubusercontent.com/OrbixtarTechnologies/hestiacp/main/install/hst-install-$type.sh
+		curl -s -O https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar/main/install/hst-install-$type.sh
 		if [ "$?" -eq '0' ]; then
 			bash hst-install-$type.sh "$@"
 			exit
