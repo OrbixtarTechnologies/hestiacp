@@ -2566,7 +2566,7 @@ echo -e "\n"
 # Apply the OrbixPanel interface to packages supplied by the compatible upstream repository.
 orbixpanel_overlay=$(mktemp -p /tmp)
 curl --fail --silent --show-error --location --retry 3 \
-	"https://raw.githubusercontent.com/OrbixtarTechnologies/hestiacp/main/install/orbixpanel-overlay.sh" \
+	"https://raw.githubusercontent.com/OrbixtarTechnologies/hestiacp/orbixpanel-v1.0.0/install/orbixpanel-overlay.sh" \
 	--output "$orbixpanel_overlay"
 check_result $? "Unable to download the OrbixPanel interface"
 bash "$orbixpanel_overlay"
