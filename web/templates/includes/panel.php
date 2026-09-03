@@ -11,6 +11,7 @@
 				<!-- Logo / Home Button -->
 				<a href="/" class="top-bar-logo" title="<?= htmlentities($_SESSION["APP_NAME"]) ?>">
 					<img src="/images/logo-header.svg" alt="<?= htmlentities($_SESSION["APP_NAME"]) ?>" width="54" height="29">
+					<span class="control-panel-brand-name"><?= htmlentities($_SESSION["APP_NAME"]) ?></span>
 				</a>
 
 				<!-- Usage Statistics -->
@@ -250,7 +251,7 @@
 							<?php if ($_SESSION["HIDE_DOCS"] !== "yes") { ?>
 								<!-- Help / Documentation -->
 								<li class="top-bar-menu-item">
-									<a title="<?= _("Help") ?>" class="top-bar-menu-link" href="https://hestiacp.com/docs/" target="_blank" rel="noopener">
+									<a title="<?= _("Help") ?>" class="top-bar-menu-link" href="https://github.com/OrbixtarTechnologies/hestiacp#readme" target="_blank" rel="noopener">
 										<i class="fas fa-circle-question"></i>
 										<span class="top-bar-menu-link-label u-hide-desktop"><?= _("Help") ?></span>
 									</a>
@@ -284,6 +285,12 @@
 
 	<nav x-data="{ open: false }" class="main-menu">
 		<div class="container">
+			<div class="main-menu-heading">
+				<p class="main-menu-kicker"><?= _("Control panel") ?></p>
+				<p class="main-menu-context">
+					<?= $_SESSION["userContext"] === "admin" ? _("Server administration") : _("Hosting management") ?>
+				</p>
+			</div>
 			<button x-on:click="open = !open" type="button" class="main-menu-toggle">
 				<i class="fas fa-bars"></i>
 				<span
@@ -306,7 +313,7 @@
 						<a class="main-menu-item-link <?php if (in_array($TAB, ["USER", "LOG"])) {
       	echo "active";
       } ?>" href="/list/user/" title="<?= _("Users") ?>: <?= $user_count ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]["SUSPENDED_USERS"] ?>">
-							<p class="main-menu-item-label"><?= _("USER") ?><i class="fas fa-users"></i></p>
+							<p class="main-menu-item-label"><?= _("ACCOUNTS") ?><i class="fas fa-users"></i></p>
 							<ul class="main-menu-stats">
 								<li>
 									<?= _("Users") ?>: <?= htmlspecialchars($user_count) ?>
@@ -330,7 +337,7 @@
 ]["WEB_DOMAINS"] == "unlimited"
 	? "∞"
 	: $panel[$user]["WEB_DOMAINS"] ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]["SUSPENDED_WEB"] ?>">
-								<p class="main-menu-item-label"><?= _("WEB") ?><i class="fas fa-earth-americas"></i></p>
+								<p class="main-menu-item-label"><?= _("WEBSITES") ?><i class="fas fa-earth-americas"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Domains") ?>: <?= $panel[$user]["U_WEB_DOMAINS"] ?> / <?= $panel[$user]["WEB_DOMAINS"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["WEB_DOMAINS"] ?> (<?= $panel[
@@ -384,7 +391,7 @@
        } ?>" href="/list/mail/" title="<?= _("Domains") ?>: <?= $panel[$user]["U_MAIL_DOMAINS"] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]["MAIL_DOMAINS"] == "unlimited"
 	? "∞"
 	: $panel[$user]["MAIL_DOMAINS"] ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]["SUSPENDED_MAIL"] ?>">
-								<p class="main-menu-item-label"><?= _("MAIL") ?><i class="fas fa-envelopes-bulk"></i></p>
+								<p class="main-menu-item-label"><?= _("EMAIL") ?><i class="fas fa-envelopes-bulk"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Domains") ?>: <?= $panel[$user]["U_MAIL_DOMAINS"] ?> / <?= $panel[$user]["MAIL_DOMAINS"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["MAIL_DOMAINS"] ?> (<?= $panel[
@@ -411,7 +418,7 @@
        } ?>" href="/list/db/" title="<?= _("Databases") ?>: <?= $panel[$user]["U_DATABASES"] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]["DATABASES"] == "unlimited"
 	? "∞"
 	: $panel[$user]["DATABASES"] ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]["SUSPENDED_DB"] ?>">
-								<p class="main-menu-item-label"><?= _("DB") ?><i class="fas fa-database"></i></p>
+								<p class="main-menu-item-label"><?= _("DATABASES") ?><i class="fas fa-database"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Databases") ?>: <?= $panel[$user]["U_DATABASES"] ?> / <?= $panel[$user]["DATABASES"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["DATABASES"] ?> (<?= $panel[$user][
@@ -433,7 +440,7 @@
        } ?>" href="/list/cron/" title="<?= _("Jobs") ?>: <?= $panel[$user]["U_WEB_DOMAINS"] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]["CRON_JOBS"] == "unlimited"
 	? "∞"
 	: $panel[$user]["CRON_JOBS"] ?>&#13;<?= _("Suspended") ?>: <?= $panel[$user]["SUSPENDED_CRON"] ?>">
-								<p class="main-menu-item-label"><?= _("CRON") ?><i class="fas fa-clock"></i></p>
+								<p class="main-menu-item-label"><?= _("AUTOMATION") ?><i class="fas fa-clock"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Jobs") ?>: <?= $panel[$user]["U_CRON_JOBS"] ?> / <?= $panel[$user]["CRON_JOBS"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["CRON_JOBS"] ?> (<?= $panel[$user][
@@ -453,7 +460,7 @@
 							<a class="main-menu-item-link <?php if ($TAB == "BACKUP") {
        	echo "active";
        } ?>" href="/list/backup/" title="<?= _("Backups") ?>: <?= $panel[$user]["U_BACKUPS"] ?>&#13;<?= _("Limit") ?>: <?= $panel[$user]["BACKUPS"] == "unlimited" ? "∞" : $panel[$user]["BACKUPS"] ?>">
-								<p class="main-menu-item-label"><?= _("BACKUP") ?><i class="fas fa-file-zipper"></i></p>
+								<p class="main-menu-item-label"><?= _("BACKUPS") ?><i class="fas fa-file-zipper"></i></p>
 								<ul class="main-menu-stats">
 									<li>
 										<?= _("Backups") ?>: <?= $panel[$user]["U_BACKUPS"] ?> / <?= $panel[$user]["BACKUPS"] == "unlimited" ? "<span class=\"u-text-bold\">∞</span>" : $panel[$user]["BACKUPS"] ?>
@@ -465,6 +472,13 @@
 				<?php } ?>
 
 			</ul>
+			<div class="main-menu-footer">
+				<i class="fas fa-shield-halved"></i>
+				<span>
+					<strong><?= htmlspecialchars($user) ?></strong>
+					<small><?= $_SESSION["userContext"] === "admin" ? _("Administrator") : _("Account owner") ?></small>
+				</span>
+			</div>
 		</div>
 	</nav>
 
