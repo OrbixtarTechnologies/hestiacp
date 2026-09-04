@@ -499,23 +499,30 @@ for pkg in $conflicts_pkg; do
 	fi
 done
 rm -f $tmpfile
-if [ -n "$conflicts" ] && [ -z "$force" ]; then
-	echo '!!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!!'
-	echo
-	echo 'WARNING: The following packages are already installed'
-	echo "$conflicts"
-	echo
-	echo 'It is highly recommended that you remove them before proceeding.'
-	echo
-	echo '!!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!!'
-	echo
-	read -p 'Would you like to remove the conflicting packages? [y/N] ' answer
-	if [ "$answer" = 'y' ] || [ "$answer" = 'Y' ]; then
+
+if [ -n "$conflicts" ]; then
+	if [ "$force" = 'yes' ]; then
+		echo "[ * ] Removing conflicting packages: $conflicts"
 		apt-get -qq purge $conflicts -y
 		check_result $? 'apt-get remove failed'
-		unset $answer
 	else
-		check_result 1 "OrbixPanel should be installed on a clean server."
+		echo '!!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!!'
+		echo
+		echo 'WARNING: The following packages are already installed'
+		echo "$conflicts"
+		echo
+		echo 'They conflict with services managed by OrbixPanel and cannot be skipped.'
+		echo
+		echo '!!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!! !!!'
+		echo
+		read -p 'Would you like to remove the conflicting packages? [y/N] ' answer
+		if [ "$answer" = 'y' ] || [ "$answer" = 'Y' ]; then
+			apt-get -qq purge $conflicts -y
+			check_result $? 'apt-get remove failed'
+			unset answer
+		else
+			check_result 1 "OrbixPanel should be installed on a clean server. Re-run with --force to purge conflicts non-interactively."
+		fi
 	fi
 fi
 
