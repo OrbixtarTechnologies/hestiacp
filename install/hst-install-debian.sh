@@ -494,6 +494,17 @@ fi
 wget --quiet "https://$RHOST" -O /dev/null
 check_result $? "Unable to connect to the compatible package repository"
 
+# Replace firewall packages that conflict with OrbixPanel's managed firewall.
+# APT already reuses installed dependencies that satisfy the requested versions.
+if dpkg-query -W -f='${db:Status-Abbrev}' ufw 2> /dev/null | grep -q '^ii'; then
+	echo "[ * ] Replacing UFW with the OrbixPanel-managed firewall..."
+	if command -v ufw > /dev/null 2>&1; then
+		ufw --force disable >> $LOG 2>&1 || true
+	fi
+	DEBIAN_FRONTEND=noninteractive apt-get -qq purge ufw -y >> $LOG 2>&1
+	check_result $? "Unable to replace UFW"
+fi
+
 # Check installed packages
 tmpfile=$(mktemp -p /tmp)
 dpkg --get-selections > $tmpfile
