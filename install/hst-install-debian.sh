@@ -3,7 +3,7 @@
 # ======================================================== #
 #
 # OrbixPanel Installer for Debian
-# https://github.com/OrbixtarTechnologies/orbixtar
+# https://github.com/OrbixtarTechnologies/orbixtar-panel
 #
 # Currently Supported Versions:
 # Debian 12 13
@@ -632,7 +632,7 @@ install_welcome_message() {
 		echo "                          USE AT YOUR OWN RISK                      "
 	fi
 	echo "                                  ${DISPLAY_VER}                        "
-	echo "               github.com/OrbixtarTechnologies/orbixtar               "
+	echo "            github.com/OrbixtarTechnologies/orbixtar-panel            "
 	echo
 	echo "========================================================================"
 	echo
@@ -2505,7 +2505,7 @@ echo -e "\n"
 # Apply the OrbixPanel interface to packages supplied by the compatible upstream repository.
 orbixpanel_overlay=$(mktemp -p /tmp)
 curl --fail --silent --show-error --location --retry 3 \
-	"https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar/main/install/orbixpanel-overlay.sh" \
+	"https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/orbixpanel-overlay.sh" \
 	--output "$orbixpanel_overlay"
 check_result $? "Unable to download the OrbixPanel interface"
 bash "$orbixpanel_overlay"
@@ -2532,8 +2532,8 @@ we hope that you enjoy using it as much as we do!
 Please feel free to contact us at any time if you have any questions,
 or if you encounter any bugs or problems:
 
-Documentation:  https://github.com/OrbixtarTechnologies/orbixtar#readme
-GitHub:         https://github.com/OrbixtarTechnologies/orbixtar
+Documentation:  https://github.com/OrbixtarTechnologies/orbixtar-panel#readme
+GitHub:         https://github.com/OrbixtarTechnologies/orbixtar-panel
 
 Note: Automatic updates are enabled by default. If you would like to disable them,
 please log in and navigate to Server > Updates to turn them off.
@@ -2554,7 +2554,7 @@ cat $tmpfile
 rm -f $tmpfile
 
 # Add welcome message to notification panel
-$HESTIA/bin/v-add-user-notification "$username" 'Welcome to OrbixPanel!' '<p>You are ready to add <a href="/add/user/">user accounts</a> and <a href="/add/web/">domains</a>.</p><p>For help or to report an issue, visit the <a href="https://github.com/OrbixtarTechnologies/orbixtar" target="_blank" rel="noopener">OrbixPanel repository</a>.</p><p class="u-text-bold">Your hosting workspace is ready.</p>'
+$HESTIA/bin/v-add-user-notification "$username" 'Welcome to OrbixPanel!' '<p>You are ready to add <a href="/add/user/">user accounts</a> and <a href="/add/web/">domains</a>.</p><p>For help or to report an issue, visit the <a href="https://github.com/OrbixtarTechnologies/orbixtar-panel" target="_blank" rel="noopener">OrbixPanel repository</a>.</p><p class="u-text-bold">Your hosting workspace is ready.</p>'
 
 # Clean-up
 # Sort final configuration file
