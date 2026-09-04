@@ -2767,7 +2767,39 @@ body.page-reset {
 
 	& .form-control {
 		min-height: 46px;
+		color: #172033;
+		-webkit-text-fill-color: #172033;
+		caret-color: var(--workspace-blue-600);
 		background: #f8fafc;
+		border-color: #94a3b8;
+		opacity: 1;
+
+		&::placeholder {
+			color: #64748b;
+			-webkit-text-fill-color: #64748b;
+			opacity: 1;
+		}
+
+		&:focus {
+			color: #172033;
+			-webkit-text-fill-color: #172033;
+			background: #fff;
+		}
+
+		&:disabled {
+			color: #475569;
+			-webkit-text-fill-color: #475569;
+			background: #e2e8f0;
+			opacity: 1;
+		}
+
+		&:-webkit-autofill,
+		&:-webkit-autofill:hover,
+		&:-webkit-autofill:focus {
+			-webkit-text-fill-color: #172033;
+			caret-color: var(--workspace-blue-600);
+			box-shadow: inset 0 0 0 1000px #f8fafc;
+		}
 	}
 
 	& .button {
@@ -2831,14 +2863,43 @@ body .button {
 
 .form-control,
 .form-select {
+	color: #172033;
+	-webkit-text-fill-color: #172033;
+	caret-color: var(--workspace-blue-600);
+	background-color: #fff;
 	border-color: #cbd5e1;
 	border-radius: 6px;
 	box-shadow: 0 1px 2px rgb(15 23 42 / 4%);
+	opacity: 1;
+
+	&::placeholder {
+		color: #64748b;
+		-webkit-text-fill-color: #64748b;
+		opacity: 1;
+	}
 
 	&:focus {
+		color: #172033;
+		-webkit-text-fill-color: #172033;
+		background-color: #fff;
 		border-color: var(--workspace-blue-500);
 		box-shadow: 0 0 0 3px rgb(43 125 233 / 14%);
 	}
+
+	&:disabled {
+		color: #475569;
+		-webkit-text-fill-color: #475569;
+		background-color: #e2e8f0;
+		opacity: 1;
+	}
+}
+
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus {
+	-webkit-text-fill-color: #172033;
+	caret-color: var(--workspace-blue-600);
+	box-shadow: inset 0 0 0 1000px #fff;
 }
 
 @media (--viewport-medium) {
