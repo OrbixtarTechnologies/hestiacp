@@ -59,6 +59,40 @@
 
 			</div>
 
+			<form class="orbix-global-search" data-orbix-tool-search role="search">
+				<label class="u-hidden-visually" for="orbix-global-search-input">
+					<?= tohtml($_SESSION["userContext"] === "admin" ? _("Search tools and accounts") : _("Search tools")) ?>
+				</label>
+				<i class="fas fa-magnifying-glass" aria-hidden="true"></i>
+				<input
+					id="orbix-global-search-input"
+					class="orbix-global-search-input"
+					type="search"
+					list="orbix-tool-search-options"
+					placeholder="<?= tohtml($_SESSION["userContext"] === "admin" ? _("Search tools and accounts ( / )") : _("Search tools ( / )")) ?>"
+					autocomplete="off"
+				>
+				<datalist id="orbix-tool-search-options">
+					<option value="<?= tohtml(_("Dashboard")) ?>" data-orbix-url="/dashboard/"></option>
+					<?php if ($_SESSION["userContext"] === "admin" && empty($_SESSION["look"])) { ?>
+						<option value="<?= tohtml(_("List Accounts")) ?>" data-orbix-url="/list/user/"></option>
+						<option value="<?= tohtml(_("Create a New Account")) ?>" data-orbix-url="/add/user/"></option>
+						<option value="<?= tohtml(_("Hosting Packages")) ?>" data-orbix-url="/list/package/"></option>
+						<option value="<?= tohtml(_("Service Manager")) ?>" data-orbix-url="/list/server/"></option>
+						<option value="<?= tohtml(_("IP Functions")) ?>" data-orbix-url="/list/ip/"></option>
+						<option value="<?= tohtml(_("Security Center")) ?>" data-orbix-url="/list/firewall/"></option>
+						<option value="<?= tohtml(_("System Updates")) ?>" data-orbix-url="/list/updates/"></option>
+					<?php } ?>
+					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["WEB_SYSTEM"]) && $panel[$user]["WEB_DOMAINS"] != "0")) { ?><option value="<?= tohtml(_("Websites")) ?>" data-orbix-url="/list/web/"></option><?php } ?>
+					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["DNS_SYSTEM"]) && $panel[$user]["DNS_DOMAINS"] != "0")) { ?><option value="<?= tohtml(_("DNS Zone Manager")) ?>" data-orbix-url="/list/dns/"></option><?php } ?>
+					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["MAIL_SYSTEM"]) && $panel[$user]["MAIL_DOMAINS"] != "0")) { ?><option value="<?= tohtml(_("Email Accounts")) ?>" data-orbix-url="/list/mail/"></option><?php } ?>
+					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["DB_SYSTEM"]) && $panel[$user]["DATABASES"] != "0")) { ?><option value="<?= tohtml(_("Databases")) ?>" data-orbix-url="/list/db/"></option><?php } ?>
+					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["CRON_SYSTEM"]) && $panel[$user]["CRON_JOBS"] != "0")) { ?><option value="<?= tohtml(_("Cron Jobs")) ?>" data-orbix-url="/list/cron/"></option><?php } ?>
+					<?php if ($_SESSION["userContext"] === "admin" || !empty($_SESSION["BACKUP_SYSTEM"])) { ?><option value="<?= tohtml(_("Backups")) ?>" data-orbix-url="/list/backup/"></option><?php } ?>
+					<option value="<?= tohtml(_("Statistics")) ?>" data-orbix-url="/list/stats/"></option>
+				</datalist>
+			</form>
+
 			<!-- Notifications / Menu wrapper -->
 			<div class="top-bar-right">
 
@@ -283,10 +317,10 @@
 		</div>
 	</div>
 
-	<nav x-data="{ open: false }" class="main-menu">
+	<nav x-data="{ open: false }" class="main-menu <?= $_SESSION["userContext"] === "admin" && empty($_SESSION["look"]) ? "main-menu-admin" : "main-menu-user" ?>">
 		<div class="container">
 			<div class="main-menu-heading">
-				<p class="main-menu-kicker"><?= _("Control panel") ?></p>
+				<p class="main-menu-kicker"><?= $_SESSION["userContext"] === "admin" ? _("Server Manager") : _("Control panel") ?></p>
 				<p class="main-menu-context">
 					<?= $_SESSION["userContext"] === "admin" ? _("Server administration") : _("Hosting management") ?>
 				</p>
@@ -301,6 +335,13 @@
 				</span>
 			</button>
 			<ul x-cloak x-show="open" class="main-menu-list">
+				<li class="main-menu-item">
+					<a class="main-menu-item-link <?php if ($TAB === "DASHBOARD") {
+						echo "active";
+					} ?>" href="/dashboard/">
+						<p class="main-menu-item-label"><span><?= $_SESSION["userContext"] === "admin" ? _("HOME") : _("TOOLS") ?></span><i class="fas fa-house"></i></p>
+					</a>
+				</li>
 
 				<!-- Users tab -->
 				<?php if ($_SESSION["userContext"] == "admin" && $_SESSION["look"] === "") { ?>

@@ -13,6 +13,7 @@ import handleEditWebListeners from './editWebListeners';
 import handleErrorMessage from './errorHandler';
 import focusFirstInput from './focusFirstInput';
 import handleFormSubmit from './formSubmit';
+import handleGlobalToolSearch from './globalToolSearch';
 import handleFtpAccountHints from './ftpAccountHints';
 import handleFtpAccounts from './ftpAccounts';
 import handleIpListDataSource from './ipListDataSource';
@@ -44,6 +45,7 @@ function initListeners() {
 	handleDocRootHint();
 	handleEditWebListeners();
 	handleFormSubmit();
+	handleGlobalToolSearch();
 	handleFtpAccounts();
 	handleListSorting();
 	handleListUnitSelect();
