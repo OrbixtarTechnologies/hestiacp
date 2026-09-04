@@ -23,10 +23,10 @@ fi
 if [ ! -z "$(grep ^admin: /etc/passwd)" ] && [ -z "$1" ]; then
 	echo "Error: user admin exists"
 	echo
-	echo 'Please remove admin user before proceeding.'
-	echo 'If you want to do it automatically run installer with -f option:'
-	echo 'Downloaded file: sudo bash hst-install.sh --force'
-	echo 'Piped installer: curl -fsSL https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install.sh | sudo bash -s -- --force'
+	echo 'Use a different panel administrator name, or remove the existing account if it is disposable.'
+	echo 'Recommended piped install:'
+	echo 'curl -fsSL https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install.sh | sudo bash -s -- --username orbixadmin'
+	echo 'Use --force only on a disposable clean server; it bypasses additional safety checks.'
 	exit 1
 fi
 
@@ -34,10 +34,10 @@ fi
 if [ ! -z "$(grep ^admin: /etc/group)" ] && [ -z "$1" ]; then
 	echo "Error: group admin exists"
 	echo
-	echo 'Please remove admin group before proceeding.'
-	echo 'If you want to do it automatically run installer with -f option:'
-	echo 'Downloaded file: sudo bash hst-install.sh --force'
-	echo 'Piped installer: curl -fsSL https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install.sh | sudo bash -s -- --force'
+	echo 'Use a different panel administrator name, or remove the existing group if it is disposable.'
+	echo 'Recommended piped install:'
+	echo 'curl -fsSL https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install.sh | sudo bash -s -- --username orbixadmin'
+	echo 'Use --force only on a disposable clean server; it bypasses additional safety checks.'
 	exit 1
 fi
 
