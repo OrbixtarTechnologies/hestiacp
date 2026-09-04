@@ -102,12 +102,26 @@ ensure_utf8_locale() {
 
 ensure_utf8_locale
 
+run_installer() {
+	local installer_path="$1"
+	shift
+
+	# A curl-piped wrapper has no usable stdin after the download stream ends.
+	# Reattach the OS-specific installer to the controlling terminal so its
+	# confirmation and configuration prompts remain interactive.
+	if [ -r /dev/tty ]; then
+		bash "$installer_path" "$@" < /dev/tty
+	else
+		bash "$installer_path" "$@"
+	fi
+}
+
 check_wget_curl() {
 	# Check wget
 	if [ -e '/usr/bin/wget' ]; then
 		wget -q https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install-$type.sh -O hst-install-$type.sh
 		if [ "$?" -eq '0' ]; then
-			bash hst-install-$type.sh "$@"
+			run_installer "hst-install-$type.sh" "$@"
 			exit
 		else
 			echo "Error: hst-install-$type.sh download failed."
@@ -120,7 +134,7 @@ check_wget_curl() {
 	if [ -e '/usr/bin/curl' ]; then
 		curl -s -O https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install-$type.sh
 		if [ "$?" -eq '0' ]; then
-			bash hst-install-$type.sh "$@"
+			run_installer "hst-install-$type.sh" "$@"
 			exit
 		else
 			echo "Error: hst-install-$type.sh download failed."
