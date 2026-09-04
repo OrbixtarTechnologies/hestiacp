@@ -4,7 +4,7 @@
 #
 # OrbixPanel Installation Routine
 # Automatic OS detection wrapper
-# https://github.com/OrbixtarTechnologies/orbixtar
+# https://github.com/OrbixtarTechnologies/orbixtar-panel
 #
 # Currently Supported Operating Systems:
 #
@@ -25,7 +25,8 @@ if [ ! -z "$(grep ^admin: /etc/passwd)" ] && [ -z "$1" ]; then
 	echo
 	echo 'Please remove admin user before proceeding.'
 	echo 'If you want to do it automatically run installer with -f option:'
-	echo "Example: bash $0 --force"
+	echo 'Downloaded file: sudo bash hst-install.sh --force'
+	echo 'Piped installer: curl -fsSL https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install.sh | sudo bash -s -- --force'
 	exit 1
 fi
 
@@ -35,7 +36,8 @@ if [ ! -z "$(grep ^admin: /etc/group)" ] && [ -z "$1" ]; then
 	echo
 	echo 'Please remove admin group before proceeding.'
 	echo 'If you want to do it automatically run installer with -f option:'
-	echo "Example: bash $0 --force"
+	echo 'Downloaded file: sudo bash hst-install.sh --force'
+	echo 'Piped installer: curl -fsSL https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install.sh | sudo bash -s -- --force'
 	exit 1
 fi
 
@@ -103,7 +105,7 @@ ensure_utf8_locale
 check_wget_curl() {
 	# Check wget
 	if [ -e '/usr/bin/wget' ]; then
-		wget -q https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar/main/install/hst-install-$type.sh -O hst-install-$type.sh
+		wget -q https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install-$type.sh -O hst-install-$type.sh
 		if [ "$?" -eq '0' ]; then
 			bash hst-install-$type.sh "$@"
 			exit
@@ -116,7 +118,7 @@ check_wget_curl() {
 
 	# Check curl
 	if [ -e '/usr/bin/curl' ]; then
-		curl -s -O https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar/main/install/hst-install-$type.sh
+		curl -s -O https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install-$type.sh
 		if [ "$?" -eq '0' ]; then
 			bash hst-install-$type.sh "$@"
 			exit
