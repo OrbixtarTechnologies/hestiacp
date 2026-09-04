@@ -1,0 +1,22 @@
+#!/bin/bash
+# info: remove a fleet node and its cached health
+# options: NAME
+#
+# example: v-delete-fleet-node edge-1
+
+name=$1
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source "$HESTIA/func/fleet.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '1' "$#" 'NAME'
+check_hestia_demo_mode
+fleet_prepare_dirs
+fleet_load_node "$name"
+
+rm -f -- "$fleet_nodes_dir/$name.conf" "$fleet_cache_dir/$name.json"
+"$BIN/v-log-action" "system" "Warning" "System" "Fleet node removed (Node: $name, Host: $HOST:$PORT)."
+log_event "$OK" "$ARGUMENTS"
+exit 0

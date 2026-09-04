@@ -43,10 +43,11 @@
 
 <div class="container">
 
-	<form
+		<form
 		x-data="{
 			loginDisabled: <?= tohtml($v_login_disabled === "yes" ? "true" : "false") ?>,
 			useIpAllowList: <?= tohtml($v_login_use_iplist === "yes" ? "true" : "false") ?>,
+			resellerEnabled: <?= tohtml($v_reseller === "yes" ? "true" : "false") ?>,
 			showAdvanced: false,
 		}"
 		id="main-form"
@@ -156,6 +157,25 @@
 						<option value="admin" <?= tohtml($v_role == "admin" ? "selected" : "") ?>><?= tohtml( _("Administrator")) ?></option>
 						<option value="dns-cluster" <?= tohtml($v_role == "dns-cluster" ? "selected" : "") ?>><?= tohtml( _("DNS Sync User")) ?></option>
 					</select>
+				</div>
+			<?php endif; ?>
+			<?php if ($v_username !== $_SESSION["ROOT_USER"] && $_SESSION["userContext"] === "admin" && $_SESSION["user"] !== $v_username): ?>
+				<div class="u-mb20">
+					<div class="form-check">
+						<input x-model="resellerEnabled" class="form-check-input" type="checkbox" name="v_reseller" id="v_reseller">
+						<label for="v_reseller"><?= tohtml(_("Allow this user to manage customer accounts")) ?></label>
+					</div>
+					<p class="u-mt5 u-mb10"><?= tohtml(_("Resellers remain regular users. They cannot access server administration, security, migrations, or other customers.")) ?></p>
+					<div x-cloak x-show="resellerEnabled" class="u-mt10">
+						<label for="v_reseller_max_users" class="form-label"><?= tohtml(_("Maximum customer accounts")) ?></label>
+						<input class="form-control" type="number" min="1" max="9999" name="v_reseller_max_users" id="v_reseller_max_users" value="<?= tohtml($v_reseller_max_users ?: "10") ?>">
+						<label for="v_reseller_packages" class="form-label u-mt10"><?= tohtml(_("Packages resellers may assign")) ?></label>
+						<select class="form-select" multiple name="v_reseller_packages[]" id="v_reseller_packages" size="<?= min(6, max(2, count($packages))) ?>">
+							<?php foreach ($packages as $key => $value): ?>
+								<option value="<?= tohtml($key) ?>" <?= in_array($key, $v_reseller_packages, true) ? "selected" : "" ?>><?= tohtml($key) ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
 				</div>
 			<?php endif; ?>
 			<?php if ($_SESSION["POLICY_USER_CHANGE_THEME"] !== "no") { ?>

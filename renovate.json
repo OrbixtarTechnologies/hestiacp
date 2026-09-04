@@ -11,6 +11,5 @@
 		"customManagers:biomeVersions"
 	],
 	"ignorePaths": ["**/node_modules/**", "install/deb/filemanager/filegator/composer.json"],
-	"rangeStrategy": "bump",
-	"reviewers": ["jaapmarcus"]
+	"rangeStrategy": "bump"
 }

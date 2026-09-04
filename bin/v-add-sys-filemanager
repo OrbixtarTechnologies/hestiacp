@@ -1,5 +1,5 @@
 #!/bin/bash
-# info: add file manager functionality to Hestia Control Panel
+# info: add file manager functionality to OrbixPanel
 # options: [MODE]
 #
 # This function installs the File Manager on the server

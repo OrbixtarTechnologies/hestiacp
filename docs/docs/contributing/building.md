@@ -6,7 +6,7 @@ For building `hestia-nginx` or `hestia-php`, at least 2 GB of memory is required
 
 Here is more detailed information about the build scripts that are run from `src`:
 
-## Installing Hestia from a branch
+## Installing OrbixPanel from a branch
 
 The following is useful for testing a Pull Request or a branch on a fork.
 
@@ -35,32 +35,32 @@ Any option can be appended to the installer command. [See the complete list](../
 ## Build packages only
 
 ```bash
-# Only Hestia
+# Only OrbixPanel
 ./hst_autocompile.sh --hestia --noinstall --keepbuild '~localsrc'
 ```
 
 ```bash
-# Hestia + hestia-nginx and hestia-php
+# OrbixPanel + hestia-nginx and hestia-php
 ./hst_autocompile.sh --all --noinstall --keepbuild '~localsrc'
 ```
 
 ## Build and install packages
 
 ::: info
-Use if you have Hestia already installed, for your changes to take effect.
+Use if you have OrbixPanel already installed, for your changes to take effect.
 :::
 
 ```bash
-# Only Hestia
+# Only OrbixPanel
 ./hst_autocompile.sh --hestia --install '~localsrc'
 ```
 
 ```bash
-# Hestia + hestia-nginx and hestia-php
+# OrbixPanel + hestia-nginx and hestia-php
 ./hst_autocompile.sh --all --install '~localsrc'
 ```
 
-## Updating Hestia from GitHub
+## Updating OrbixPanel from GitHub
 
 The following is useful for pulling the latest staging/beta changes from GitHub and compiling the changes.
 

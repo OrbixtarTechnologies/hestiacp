@@ -4,7 +4,7 @@
 #
 # example: v-update-host-certificate admin example.com
 #
-# This function updates the SSL certificate used for Hestia Control Panel.
+# This function updates the SSL certificate used for OrbixPanel.
 
 #----------------------------------------------------------#
 #                Variables & Functions                     #

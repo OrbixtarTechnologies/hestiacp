@@ -1,0 +1,41 @@
+#!/bin/bash
+# info: suspend or resume a reseller-owned account
+# options: RESELLER USER STATUS
+
+reseller=$1
+user=$2
+status=$3
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '3' "$#" 'RESELLER USER STATUS'
+is_user_format_valid "$reseller" 'reseller'
+is_format_valid 'user'
+is_boolean_format_valid "$status" 'status'
+is_reseller_valid "$reseller"
+is_reseller_user_valid "$reseller" "$user"
+check_hestia_demo_mode
+
+mkdir -p "$HESTIA/data/reseller-locks"
+exec 9> "$HESTIA/data/reseller-locks/$reseller.lock"
+if ! flock -n 9; then
+	check_result "$E_INUSE" "another account operation is already running for reseller $reseller"
+fi
+
+current_status=$(awk -F"'" '/^SUSPENDED=/ {print $2}' "$HESTIA/data/users/$user/user.conf")
+if [ "$status" = 'yes' ] && [ "$current_status" != 'yes' ]; then
+	$BIN/v-suspend-user "$user"
+	check_result "$?" "account suspension failed"
+	increase_user_value "$reseller" '$SUSPENDED_USERS'
+elif [ "$status" = 'no' ] && [ "$current_status" = 'yes' ]; then
+	$BIN/v-unsuspend-user "$user"
+	check_result "$?" "account activation failed"
+	decrease_user_value "$reseller" '$SUSPENDED_USERS'
+fi
+
+$BIN/v-log-action "$reseller" "Warning" "Users" "Managed account status changed (User: $user, Suspended: $status)."
+log_event "$OK" "$ARGUMENTS"
+
+exit

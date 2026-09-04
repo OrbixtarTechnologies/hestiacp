@@ -6,7 +6,7 @@ To manage your web domains, navigate to the **Web <i class="fas fa-fw fa-globe-a
 
 1. Click the **<i class="fas fa-fw fa-plus-circle"></i> Add Web Domain** button.
 2. Enter the domain name in the **Domain** field.
-   - If you wish to manage this domain’s DNS in Hestia, check the box labeled **Create DNS zone**
+   - If you wish to manage this domain’s DNS in OrbixPanel, check the box labeled **Create DNS zone**
    - If you wish to enable mail for this domain, check the box labeled **Enable mail for this domain**.
 3. Click the **<i class="fas fa-fw fa-save"></i> Save** button in the top right.
 
@@ -72,6 +72,16 @@ If your domain is an [internationalized domain name (IDN)](https://en.wikipedia.
 If you want to use your own SSL certificate you can enter the SSL certificate in the text area.
 
 If you are having issues with enabling Let’s Encrypt, please refer to our [SSL certificates](../server-administration/ssl-certificates) documentation.
+
+### Monitoring certificate status
+
+Open **SSL/TLS Status** from the Websites toolbar, Hosting Overview, or account dashboard to review every hosted domain in one place. OrbixPanel identifies domains that are unsecured, already expired, or within 30 days of certificate expiry.
+
+Each website links to its existing domain settings, where you can enable HTTPS, request a Let’s Encrypt certificate, replace a manual certificate, or update renewal settings. The status page is read-only and never exposes certificate private keys.
+
+Select any active website that is unsecured, expired, expiring within 30 days, or missing readable certificate metadata, then choose **Run AutoSSL for Selected**. OrbixPanel processes up to 100 selected websites sequentially in a tracked background job and records each successful or failed Let’s Encrypt request. Open a recent AutoSSL job to inspect its latest issuance log.
+
+AutoSSL replaces the selected website's current certificate with a Let’s Encrypt certificate. Valid certificates are not offered for bulk repair, which reduces unnecessary certificate-authority requests and rate-limit pressure.
 
 ### Changing PHP version
 

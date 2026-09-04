@@ -6,22 +6,19 @@ body:
   - type: markdown
     attributes:
       value: |
-        Is there a feature or change that you think would make Hestia Control Panel work better for you? Send us your ideas and our development team will take them into consideration.
-        Before submitting a new idea, look at the **[current feature requests list](https://github.com/hestiacp/hestiacp/labels/feature)** to see if it has already been requested.
+        Is there a feature or change that would make OrbixPanel work better for hosting customers or server operators? Describe the real workflow and outcome you need.
+        Before submitting a new idea, review the **[current feature requests](https://github.com/OrbixtarTechnologies/orbixtar-panel/labels/feature)** to see whether it has already been requested.
   - type: textarea
     id: request
     attributes:
       label: Describe the feature or change in detail
     validations:
       required: true
-  - type: dropdown
-    id: priority
+  - type: textarea
+    id: workflow
     attributes:
-      label: Would you like to sponsor this feature to have it implemented?
-      description: While there is no obligation, our development team has a limited number of resources and time available and a financial contribution would help prioritize your request.
-      options:
-        - "Yes"
-        - "No"
+      label: Describe the current workflow and desired outcome
+      description: Include the account role, routes or commands involved, expected permission boundary, and how success should be verified.
     validations:
       required: true
   - type: markdown

@@ -1,46 +1,42 @@
 ---
 layout: home
 
-title: Hestia Control Panel
-titleTemplate: Open-source web server control panel.
+title: OrbixPanel
+titleTemplate: Hosting and server operations by Orbixtar
 
 hero:
-  name: Hestia Control Panel
-  text: Open-source web server control panel
-  tagline: Fast, reliable, open-source. The control panel you’ve always wanted is just a command away.
+  name: OrbixPanel
+  text: One control plane for hosting operations
+  tagline: Provision accounts, operate services, secure servers, and give customers a focused workspace from one independent, open-source panel.
   image:
     src: /logo.svg
-    alt: Hestia Logo
+    alt: OrbixPanel orbit and server mark
   actions:
     - theme: brand
-      text: Get started
+      text: Install OrbixPanel
+      link: /install
+    - theme: alt
+      text: Read the operator guide
       link: /docs/introduction/getting-started
     - theme: alt
-      text: Try the demo
-      link: https://demo.hestiacp.com:8083/
-    - theme: alt
-      text: View on GitHub
-      link: https://github.com/hestiacp/hestiacp
+      text: View source
+      link: https://github.com/OrbixtarTechnologies/orbixtar-panel
 
 features:
-  - icon: 🚀
-    title: Fast & easy to learn
-    details: Hestia is made with ease of use in mind. Creating a user or a website is as easy as clicking a button and filling out a couple of fields, while advanced features are easily accessible.
-    link: /docs/introduction/getting-started
-    linkText: Documentation
-  - icon: ❤️
-    title: Made with love & pride
-    details: Hestia is open-source software that is built by passionate people from around the world. This means that the code is reviewed by multiple people and that anybody can contribute to it!
-    link: /team
-    linkText: See the team
-  - icon: 🛠️
-    title: Extendable & powerful
-    details: Hestia is extendable while being easy to learn. You can build your own themes, web templates, quick install applications and can interact with it using third party software via its API.
-    link: /docs/contributing/development
-    linkText: Help develop Hestia
-  - icon: 🤝
-    title: Supported by the community
-    details: Hestia has a great support community - join the forum! To keep the project running, we rely on donations, which can be made via PayPal or cryptocurrency.
-    link: /donate
-    linkText: Donate
+  - title: Customer hosting workspace
+    details: Manage domains, DNS, email, databases, files, backups, cron jobs, access keys, and account security without exposing server-wide controls.
+    link: /docs/user-guide/account
+    linkText: Explore customer tools
+  - title: Server Manager
+    details: Provision accounts and packages, configure services, control IPs and firewall policy, inspect logs, and monitor live server resources.
+    link: /docs/server-administration/configuration
+    linkText: Explore server operations
+  - title: Automation-ready operations
+    details: Use access-scoped API keys and the command-line interface to connect billing, provisioning, DNS clusters, and repeatable operational workflows.
+    link: /docs/server-administration/rest-api
+    linkText: Use the API
+  - title: Familiar, independently built
+    details: OrbixPanel follows established hosting-control-panel workflows while using Orbixtar identity, open-source code, and explicit permission boundaries.
+    link: https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/README.md
+    linkText: Read the project principles
 ---

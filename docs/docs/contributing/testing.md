@@ -32,7 +32,7 @@ apt update && apt upgrade
 
 ## Install from beta repo
 
-If you want to install a new Hestia installation form the beta server.
+If you want to install a new OrbixPanel installation form the beta server.
 
 ```bash
 # Debian

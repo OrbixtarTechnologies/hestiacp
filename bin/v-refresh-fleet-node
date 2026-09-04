@@ -1,0 +1,35 @@
+#!/bin/bash
+# info: refresh cached health for one pinned-TLS fleet node
+# options: NAME
+#
+# example: v-refresh-fleet-node edge-1
+
+name=$1
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source "$HESTIA/func/fleet.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '1' "$#" 'NAME'
+fleet_prepare_dirs
+fleet_load_node "$name"
+
+temporary_cache=$(mktemp "$fleet_cache_dir/.${name}.XXXXXX")
+cleanup() {
+	rm -f -- "$temporary_cache"
+}
+trap cleanup EXIT
+
+if fleet_collect_snapshot "$name" > "$temporary_cache"; then
+	chmod 640 "$temporary_cache"
+	mv -f -- "$temporary_cache" "$fleet_cache_dir/$name.json"
+	trap - EXIT
+	exit 0
+fi
+
+fleet_write_offline_snapshot "$name" > "$temporary_cache"
+chmod 640 "$temporary_cache"
+mv -f -- "$temporary_cache" "$fleet_cache_dir/$name.json"
+trap - EXIT
+check_result "$E_CONNECT" "Fleet node $name could not be refreshed"

@@ -1,18 +1,16 @@
 ---
 aside: false
 lastUpdated: false
+title: Support OrbixPanel
 ---
 
-# Donate to the project
+Orbixtar has not published an official donation destination for OrbixPanel. Do not send funds to addresses copied from an upstream project or unofficial source.
 
-By donating to Hestia, you help maintain server costs, development time, and more!
+You can support the project by:
 
-Here are our official donation platforms:
+- [reporting reproducible bugs](https://github.com/OrbixtarTechnologies/orbixtar-panel/issues);
+- testing installation and upgrade workflows on supported systems;
+- improving documentation, translations, accessibility, and tests; or
+- contributing focused hosting and server-management improvements.
 
-- [PayPal](https://www.paypal.com/donate/?cmd=_s-xclick&hosted_button_id=ST87LQH2CHGLA)
-- Crypto
-  - Bitcoin: bc1q48jt5wg5jaj8g9zy7c3j03cv57j2m2u5anlutu
-  - Ethereum: 0xfF3Dd2c889bd0Ff73d8085B84A314FC7c88e5D51
-  - Binance: bnb1l4ywvw5ejfmsgjdcx8jn5lxj7zsun8ktfu7rh8
-  - Smart Chain: 0xfF3Dd2c889bd0Ff73d8085B84A314FC7c88e5D51
-  - Monero/XMR: 45p5eKWfp3kYcY3cBtKq2TWpp5HGYFAbre2Xd76sRhWGXfahAj5MkxzV2oPF2VqU617pwS5JZh1h4gy6jTm73vE7PnQ48Rs
+See the [contribution guide](https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/CONTRIBUTING.md) before starting substantial work.

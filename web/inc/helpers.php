@@ -48,6 +48,15 @@ if (!function_exists("tohtml")) {
 }
 
 /**
+ * Return the configured product name with the OrbixPanel identity as a safe default.
+ */
+function get_panel_name(): string {
+	$app_name = trim((string) ($_SESSION["APP_NAME"] ?? "OrbixPanel"), "'\" ");
+
+	return $app_name !== "" ? $app_name : "OrbixPanel";
+}
+
+/**
  * Looks for a code equivalent to "exit_code" to use in http_code.
  *
  * @param int $exit_code

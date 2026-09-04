@@ -16,6 +16,10 @@ $bandwidth_limit = $panel[$user]["BANDWIDTH"] === "unlimited" ? "∞" : humanize
 			<a class="button button-primary" href="/add/user/">
 				<i class="fas fa-plus"></i><?= tohtml(_("Create an Account")) ?>
 			</a>
+		<?php } else { ?>
+			<a class="button button-primary" href="/list/hosting/">
+				<i class="fas fa-layer-group"></i><?= tohtml(_("Hosting Overview")) ?>
+			</a>
 		<?php } ?>
 	</header>
 
@@ -43,7 +47,7 @@ $bandwidth_limit = $panel[$user]["BANDWIDTH"] === "unlimited" ? "∞" : humanize
 					<span><strong><?= tohtml(_("Create hosting packages")) ?></strong><small><?= tohtml(_("Define account limits, quotas, and enabled capabilities.")) ?></small></span>
 					<i class="fas fa-chevron-right"></i>
 				</a>
-				<a class="orbix-action-card" href="/list/firewall/">
+				<a class="orbix-action-card" href="/list/security/">
 					<i class="fas fa-shield-halved"></i>
 					<span><strong><?= tohtml(_("Review server security")) ?></strong><small><?= tohtml(_("Inspect firewall rules, blocked hosts, and access controls.")) ?></small></span>
 					<i class="fas fa-chevron-right"></i>
@@ -60,10 +64,14 @@ $bandwidth_limit = $panel[$user]["BANDWIDTH"] === "unlimited" ? "∞" : humanize
 				<div class="orbix-favorites-grid">
 					<a class="orbix-tool-card" href="/list/user/"><i class="fas fa-users"></i><span><strong><?= tohtml(_("List Accounts")) ?></strong><small><?= tohtml(_("Review, suspend, and manage hosting accounts.")) ?></small></span></a>
 					<a class="orbix-tool-card" href="/add/user/"><i class="fas fa-user-plus"></i><span><strong><?= tohtml(_("Create a New Account")) ?></strong><small><?= tohtml(_("Provision a hosting account and resource package.")) ?></small></span></a>
-					<a class="orbix-tool-card" href="/list/server/"><i class="fas fa-server"></i><span><strong><?= tohtml(_("Service Manager")) ?></strong><small><?= tohtml(_("Inspect, start, stop, and restart services.")) ?></small></span></a>
+					<a class="orbix-tool-card" href="/list/server-health/"><i class="fas fa-heart-pulse"></i><span><strong><?= tohtml(_("Server Health")) ?></strong><small><?= tohtml(_("Review capacity, load, uptime, and service availability.")) ?></small></span></a>
+					<a class="orbix-tool-card" href="/list/runtime-profiles/"><i class="fas fa-cubes-stacked"></i><span><strong><?= tohtml(_("Runtime Profiles")) ?></strong><small><?= tohtml(_("Build a safe MultiPHP component set and server default.")) ?></small></span></a>
+					<a class="orbix-tool-card" href="/list/fleet/"><i class="fas fa-network-wired"></i><span><strong><?= tohtml(_("Server Fleet")) ?></strong><small><?= tohtml(_("Monitor trusted OrbixPanel nodes from one control plane.")) ?></small></span></a>
 					<a class="orbix-tool-card" href="/list/dns/"><i class="fas fa-globe"></i><span><strong><?= tohtml(_("DNS Zone Manager")) ?></strong><small><?= tohtml(_("Manage hosted DNS zones and records.")) ?></small></span></a>
 					<a class="orbix-tool-card" href="/list/terminal/"><i class="fas fa-terminal"></i><span><strong><?= tohtml(_("Terminal")) ?></strong><small><?= tohtml(_("Open the secured server command console.")) ?></small></span></a>
 					<a class="orbix-tool-card" href="/list/updates/"><i class="fas fa-arrows-rotate"></i><span><strong><?= tohtml(_("System Updates")) ?></strong><small><?= tohtml(_("Review available panel and operating system updates.")) ?></small></span></a>
+					<a class="orbix-tool-card" href="/list/migrations/"><i class="fas fa-arrow-right-arrow-left"></i><span><strong><?= tohtml(_("Migration Center")) ?></strong><small><?= tohtml(_("Import and track cPanel account transfers.")) ?></small></span></a>
+					<?php if (!empty($_SESSION["MAIL_SYSTEM"]) && $_SESSION["MAIL_SYSTEM"] !== "remote") { ?><a class="orbix-tool-card" href="/list/mail-queue/"><i class="fas fa-envelopes-bulk"></i><span><strong><?= tohtml(_("Mail Queue")) ?></strong><small><?= tohtml(_("Inspect, retry, and remove delayed deliveries.")) ?></small></span></a><?php } ?>
 				</div>
 			</section>
 
@@ -109,10 +117,15 @@ $bandwidth_limit = $panel[$user]["BANDWIDTH"] === "unlimited" ? "∞" : humanize
 			<div class="orbix-section-heading"><h2 id="admin-tools-title"><?= tohtml(_("Tools")) ?></h2></div>
 			<div class="orbix-category-list">
 				<a href="/edit/server/"><i class="fas fa-gear"></i><span><?= tohtml(_("Server Configuration")) ?></span><i class="fas fa-chevron-right"></i></a>
+				<a href="/list/server-health/"><i class="fas fa-heart-pulse"></i><span><?= tohtml(_("Server Health")) ?></span><i class="fas fa-chevron-right"></i></a>
+				<a href="/list/runtime-profiles/"><i class="fas fa-cubes-stacked"></i><span><?= tohtml(_("Runtime Profiles")) ?></span><i class="fas fa-chevron-right"></i></a>
+				<a href="/list/fleet/"><i class="fas fa-network-wired"></i><span><?= tohtml(_("Server Fleet")) ?></span><i class="fas fa-chevron-right"></i></a>
 				<a href="/list/user/"><i class="fas fa-user-gear"></i><span><?= tohtml(_("Account Functions")) ?></span><i class="fas fa-chevron-right"></i></a>
 				<a href="/list/package/"><i class="fas fa-boxes-stacked"></i><span><?= tohtml(_("Packages")) ?></span><i class="fas fa-chevron-right"></i></a>
 				<a href="/list/server/"><i class="fas fa-sliders"></i><span><?= tohtml(_("Service Configuration")) ?></span><i class="fas fa-chevron-right"></i></a>
-				<a href="/list/firewall/"><i class="fas fa-shield"></i><span><?= tohtml(_("Security Center")) ?></span><i class="fas fa-chevron-right"></i></a>
+				<a href="/list/security/"><i class="fas fa-shield"></i><span><?= tohtml(_("Security Center")) ?></span><i class="fas fa-chevron-right"></i></a>
+				<a href="/list/migrations/"><i class="fas fa-arrow-right-arrow-left"></i><span><?= tohtml(_("Migration Center")) ?></span><i class="fas fa-chevron-right"></i></a>
+				<?php if (!empty($_SESSION["MAIL_SYSTEM"]) && $_SESSION["MAIL_SYSTEM"] !== "remote") { ?><a href="/list/mail-queue/"><i class="fas fa-envelopes-bulk"></i><span><?= tohtml(_("Mail Queue")) ?></span><i class="fas fa-chevron-right"></i></a><?php } ?>
 				<a href="/list/backup/"><i class="fas fa-box-archive"></i><span><?= tohtml(_("Backup")) ?></span><i class="fas fa-chevron-right"></i></a>
 			</div>
 		</section>
@@ -126,6 +139,7 @@ $bandwidth_limit = $panel[$user]["BANDWIDTH"] === "unlimited" ? "∞" : humanize
 							<a href="/list/mail/"><i class="fas fa-user-envelope"></i><span><?= tohtml(_("Email Accounts")) ?></span></a>
 							<a href="/list/mail/"><i class="fas fa-share-from-square"></i><span><?= tohtml(_("Forwarders")) ?></span></a>
 							<a href="/list/mail/"><i class="fas fa-route"></i><span><?= tohtml(_("Mail Routing")) ?></span></a>
+							<a href="/list/mail-deliverability/"><i class="fas fa-shield-halved"></i><span><?= tohtml(_("Email Deliverability")) ?></span></a>
 							<a href="/list/mail/"><i class="fas fa-shield-virus"></i><span><?= tohtml(_("Spam Filters")) ?></span></a>
 						</div>
 					</section>
@@ -155,10 +169,11 @@ $bandwidth_limit = $panel[$user]["BANDWIDTH"] === "unlimited" ? "∞" : humanize
 				<section class="orbix-tool-group" aria-labelledby="domains-tools-title">
 					<div class="orbix-tool-group-heading"><i class="fas fa-globe"></i><h2 id="domains-tools-title"><?= tohtml(_("Domains")) ?></h2></div>
 					<div class="orbix-icon-grid">
+						<a href="/list/hosting/"><i class="fas fa-layer-group"></i><span><?= tohtml(_("Hosting Overview")) ?></span></a>
 						<a href="/list/web/"><i class="fas fa-earth-americas"></i><span><?= tohtml(_("Domains")) ?></span></a>
 						<?php if (!empty($_SESSION["DNS_SYSTEM"]) && $panel[$user]["DNS_DOMAINS"] != "0") { ?><a href="/list/dns/"><i class="fas fa-location-dot"></i><span><?= tohtml(_("Zone Editor")) ?></span></a><?php } ?>
 						<a href="/list/web/"><i class="fas fa-arrow-right-arrow-left"></i><span><?= tohtml(_("Redirects")) ?></span></a>
-						<a href="/list/web/"><i class="fas fa-lock"></i><span><?= tohtml(_("SSL/TLS Status")) ?></span></a>
+						<a href="/list/ssl-status/"><i class="fas fa-lock"></i><span><?= tohtml(_("SSL/TLS Status")) ?></span></a>
 					</div>
 				</section>
 

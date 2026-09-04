@@ -10,7 +10,7 @@ Every time you rebuild the user or domain, the config files of the domain are ov
 
 This happens when:
 
-- HestiaCP is updated.
+- OrbixPanel is updated.
 - The admin initiates it.
 - The user modifies settings.
 
@@ -148,9 +148,9 @@ To write custom caching templates, use the following naming scheme:
 
 `caching-yourname.tpl`, `caching-yourname.stpl` and `caching-yourname.sh`
 
-### Does Hestia support WebSockets?
+### Does OrbixPanel support WebSockets?
 
-Yes, Hestia works fine with WebSockets; however, our default templates include by default:
+Yes, OrbixPanel works fine with WebSockets; however, our default templates include by default:
 
 ```bash
 proxy_hide_header Upgrade

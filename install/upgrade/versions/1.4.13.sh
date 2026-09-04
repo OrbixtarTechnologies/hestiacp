@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version 1.4.13
+# OrbixPanel upgrade script for target version 1.4.13
 
 #######################################################################################
 #######                      Place additional commands below.                   #######
@@ -42,7 +42,7 @@ if [ "$FIREWALL_SYSTEM" = "iptables" ]; then
 	$BIN/v-add-sys-firewall
 fi
 
-# Remove old files/folders from previous versions of Hestia Control Panel
+# Remove old files/folders from previous versions of OrbixPanel
 if [ -d "$HESTIA/web/edit/file/" ]; then
 	rm -fr $HESTIA/web/edit/file/
 fi

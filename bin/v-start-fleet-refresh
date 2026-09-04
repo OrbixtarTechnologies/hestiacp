@@ -1,0 +1,123 @@
+#!/bin/bash
+# info: start a tracked refresh for all fleet nodes or one named node
+# options: [NAME]
+#
+# example: v-start-fleet-refresh
+
+target=${1-all}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source "$HESTIA/func/fleet.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_hestia_demo_mode
+fleet_prepare_dirs
+
+nodes=()
+if [ "$target" = 'all' ]; then
+	mapfile -t nodes < <(find "$fleet_nodes_dir" -maxdepth 1 -type f -name '*.conf' -printf '%f\n' | sed 's/\.conf$//' | sort)
+else
+	fleet_load_node "$target"
+	nodes=("$target")
+fi
+if ((${#nodes[@]} == 0)); then
+	check_result "$E_NOTEXIST" "No fleet nodes are registered"
+fi
+
+state_dir="/var/log/orbixpanel/fleet-refresh"
+mkdir -p "$state_dir"
+chmod 750 "$state_dir"
+exec 8> "$state_dir/submit.lock"
+flock -x 8
+
+for status_path in "$state_dir"/*.status; do
+	[[ -f "$status_path" ]] || continue
+	active_job=${status_path##*/}
+	active_job=${active_job%.status}
+	status=$(head -n 1 "$status_path" 2> /dev/null || true)
+	pid=$(head -n 1 "$state_dir/$active_job.pid" 2> /dev/null || true)
+	if [[ "$status" == queued || "$status" == running:* ]] \
+		&& [[ "$pid" =~ ^[0-9]+$ ]] \
+		&& kill -0 "$pid" 2> /dev/null; then
+		check_result "$E_INUSE" "Fleet refresh job $active_job is already active"
+	fi
+done
+
+job_id="$(date '+%Y%m%d%H%M%S')-$$-$RANDOM"
+status_file="$state_dir/$job_id.status"
+meta_file="$state_dir/$job_id.meta"
+task_file="$state_dir/$job_id.tasks"
+result_file="$state_dir/$job_id.results"
+log_file="$state_dir/$job_id.log"
+pid_file="$state_dir/$job_id.pid"
+started_at=$(date '+%FT%T%z')
+
+cleanup_pending=yes
+cleanup() {
+	if [[ "$cleanup_pending" == yes ]]; then
+		rm -f -- "$status_file" "$meta_file" "$task_file" "$result_file" "$log_file" "$pid_file"
+	fi
+}
+trap cleanup EXIT
+
+printf '%s\n' "${nodes[@]}" > "$task_file"
+: > "$result_file"
+: > "$log_file"
+printf 'queued\n' > "$status_file"
+cat > "$meta_file" << EOF
+JOB_ID=$job_id
+TARGET=$target
+TOTAL=${#nodes[@]}
+STARTED=$started_at
+EOF
+
+nohup /bin/bash -c '
+	status_file=$1
+	log_file=$2
+	task_file=$3
+	result_file=$4
+	lock_file=$5
+	refresher=$6
+	total=$7
+
+	exec 9>"$lock_file"
+	if ! flock -n 9; then
+		printf "failed:another fleet refresh is active\n" > "$status_file"
+		exit 1
+	fi
+
+	processed=0
+	failed=0
+	while read -r node; do
+		[[ -n "$node" ]] || continue
+		printf "running:%s/%s:%s\n" "$processed" "$total" "$node" > "$status_file"
+		printf "\n== %s ==\n" "$node" >> "$log_file"
+		if timeout 90 "$refresher" "$node" >> "$log_file" 2>&1; then
+			printf "online %s\n" "$node" >> "$result_file"
+		else
+			exit_code=$?
+			printf "offline %s %s\n" "$node" "$exit_code" >> "$result_file"
+			((failed++))
+		fi
+		((processed++))
+		printf "running:%s/%s:%s\n" "$processed" "$total" "$node" > "$status_file"
+	done < "$task_file"
+	if ((failed > 0)); then
+		printf "completed_with_errors:%s/%s\n" "$processed" "$total" > "$status_file"
+	else
+		printf "completed:%s/%s\n" "$processed" "$total" > "$status_file"
+	fi
+' orbixpanel-fleet-refresh "$status_file" "$log_file" "$task_file" "$result_file" \
+	"$state_dir/apply.lock" "$BIN/v-refresh-fleet-node" "${#nodes[@]}" < /dev/null &
+
+job_pid=$!
+printf '%s\n' "$job_pid" > "$pid_file"
+chmod 640 "$status_file" "$meta_file" "$task_file" "$result_file" "$log_file" "$pid_file"
+cleanup_pending=no
+flock -u 8
+
+"$BIN/v-log-action" "system" "Info" "System" "Fleet refresh started (Job: $job_id, Nodes: ${#nodes[@]})."
+log_event "$OK" "$ARGUMENTS"
+echo "$job_id"
+exit 0

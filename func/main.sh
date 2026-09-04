@@ -2,7 +2,7 @@
 
 #===========================================================================#
 #                                                                           #
-# Hestia Control Panel - Core Function Library                              #
+# OrbixPanel - Core Function Library                              #
 #                                                                           #
 #===========================================================================#
 
@@ -280,15 +280,43 @@ is_package_full() {
 	fi
 }
 
-# User owner for reseller plugin
+# User owner for reseller account delegation
 get_user_owner() {
-	if [ -z "$RESELLER_KEY" ]; then
+	owner=$(grep "^OWNER=" "$USER_DATA/user.conf" | cut -f 2 -d \')
+	if [ -z "$owner" ]; then
 		owner="$ROOT_USER"
-	else
-		owner=$(grep "^OWNER" $USER_DATA/user.conf | cut -f 2 -d \')
-		if [ -z "$owner" ]; then
-			owner="$ROOT_USER"
-		fi
+	fi
+}
+
+# Require an enabled, unsuspended reseller account.
+is_reseller_valid() {
+	local reseller="$1"
+	local reseller_conf="$HESTIA/data/users/$reseller/user.conf"
+	if [ ! -f "$reseller_conf" ]; then
+		check_result "$E_NOTEXIST" "reseller $reseller doesn't exist"
+	fi
+	local reseller_status reseller_suspended reseller_role
+	reseller_status=$(awk -F"'" '/^RESELLER=/ {print $2}' "$reseller_conf")
+	reseller_suspended=$(awk -F"'" '/^SUSPENDED=/ {print $2}' "$reseller_conf")
+	reseller_role=$(awk -F"'" '/^ROLE=/ {print $2}' "$reseller_conf")
+	if [ "$reseller_status" != 'yes' ] || [ "$reseller_suspended" = 'yes' ] || [ "$reseller_role" != 'user' ]; then
+		check_result "$E_FORBIDEN" "user $reseller is not an active reseller"
+	fi
+}
+
+# Require a direct owner relationship. Reseller ownership is intentionally non-nested.
+is_reseller_user_valid() {
+	local reseller="$1"
+	local managed_user="$2"
+	local managed_conf="$HESTIA/data/users/$managed_user/user.conf"
+	if [ ! -f "$managed_conf" ]; then
+		check_result "$E_NOTEXIST" "user $managed_user doesn't exist"
+	fi
+	local managed_owner managed_reseller
+	managed_owner=$(awk -F"'" '/^OWNER=/ {print $2}' "$managed_conf")
+	managed_reseller=$(awk -F"'" '/^RESELLER=/ {print $2}' "$managed_conf")
+	if [ "$managed_owner" != "$reseller" ] || [ "$managed_reseller" = 'yes' ]; then
+		check_result "$E_FORBIDEN" "user $managed_user is not managed by reseller $reseller"
 	fi
 }
 

@@ -2,7 +2,7 @@ export const options = [
 	{
 		flag: 'port',
 		label: 'Port',
-		description: 'Change the port Hestia uses',
+		description: 'Change the port OrbixPanel uses',
 		type: 'text',
 		default: '8083',
 	},
@@ -173,7 +173,7 @@ export const options = [
 	{
 		flag: 'iptables',
 		label: 'iptables',
-		description: 'Allows firewall rule management within Hestia',
+		description: 'Allow firewall rule management within OrbixPanel',
 		default: 'yes',
 	},
 	{
@@ -196,8 +196,8 @@ export const options = [
 	},
 	{
 		flag: 'api',
-		label: 'Hestia API',
-		description: "Enable Hestia's internal API.",
+		label: 'OrbixPanel API',
+		description: "Enable OrbixPanel's internal API.",
 		default: 'yes',
 	},
 	{

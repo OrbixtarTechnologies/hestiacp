@@ -1,0 +1,69 @@
+#!/bin/bash
+# info: list registered fleet nodes without exposing credentials
+# options: [FORMAT]
+#
+# example: v-list-fleet-nodes json
+
+format=${1-shell}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source "$HESTIA/func/fleet.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+is_format_valid 'format'
+fleet_prepare_dirs
+mapfile -t nodes < <(find "$fleet_nodes_dir" -maxdepth 1 -type f -name '*.conf' -printf '%f\n' | sed 's/\.conf$//' | sort)
+
+node_json() {
+	local node=$1
+	local snapshot='{}'
+	fleet_load_node "$node"
+	if [ -s "$fleet_cache_dir/$node.json" ] \
+		&& jq -e 'type == "object"' "$fleet_cache_dir/$node.json" > /dev/null 2>&1; then
+		snapshot=$(cat "$fleet_cache_dir/$node.json")
+	fi
+	jq -cn \
+		--arg name "$node" \
+		--arg host "$HOST" \
+		--arg port "$PORT" \
+		--arg date "$DATE" \
+		--arg time "$TIME" \
+		--argjson snapshot "$snapshot" \
+		'{NAME:$name, HOST:$host, PORT:$port, DATE:$date, TIME:$time, STATUS:($snapshot.STATUS // "never"), CHECKED_AT:($snapshot.CHECKED_AT // ""), ERROR:($snapshot.ERROR // ""), INFO:($snapshot.INFO // {}), HEALTH:($snapshot.HEALTH // {}), SERVICES:($snapshot.SERVICES // {})}'
+}
+
+json_list() {
+	echo '{'
+	local index=0
+	local node
+	for node in "${nodes[@]}"; do
+		((index++))
+		printf '\t"%s": %s' "$node" "$(node_json "$node")"
+		if ((index < ${#nodes[@]})); then echo ','; else echo; fi
+	done
+	echo '}'
+}
+
+plain_list() {
+	local node data
+	for node in "${nodes[@]}"; do
+		data=$(node_json "$node")
+		jq -r '[.NAME,.HOST,.PORT,.STATUS,.CHECKED_AT] | @tsv' <<< "$data"
+	done
+}
+
+case "$format" in
+	json) json_list ;;
+	plain) plain_list ;;
+	csv)
+		echo 'NAME,HOST,PORT,STATUS,CHECKED_AT'
+		plain_list | tr '\t' ','
+		;;
+	shell)
+		echo 'NAME HOST PORT STATUS CHECKED_AT'
+		plain_list | column -t -s $'\t'
+		;;
+esac
+
+exit 0

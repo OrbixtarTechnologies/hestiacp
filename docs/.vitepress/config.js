@@ -3,8 +3,8 @@ import { version } from '../../package.json';
 
 export default defineConfig({
 	lang: 'en-US',
-	title: 'Hestia Control Panel',
-	description: 'Open-source web server control panel.',
+	title: 'OrbixPanel',
+	description: "Orbixtar's open-source hosting and server management control panel.",
 
 	lastUpdated: true,
 	cleanUrls: false,
@@ -14,7 +14,7 @@ export default defineConfig({
 		['link', { rel: 'icon', type: 'image/svg+xml', sizes: '16x16', href: '/logo.svg' }],
 		['link', { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' }],
 		['link', { rel: 'manifest', href: '/site.webmanifest' }],
-		['meta', { name: 'theme-color', content: '#b7236a' }],
+		['meta', { name: 'theme-color', content: '#1769e0' }],
 	],
 
 	themeConfig: {
@@ -23,9 +23,7 @@ export default defineConfig({
 		nav: nav(),
 
 		socialLinks: [
-			{ icon: 'github', link: 'https://github.com/hestiacp/hestiacp' },
-			{ icon: 'twitter', link: 'https://twitter.com/HestiaPanel' },
-			{ icon: 'facebook', link: 'https://www.facebook.com/hestiacp' },
+			{ icon: 'github', link: 'https://github.com/OrbixtarTechnologies/orbixtar-panel' },
 		],
 
 		sidebar: { '/docs/': sidebarDocs() },
@@ -33,19 +31,17 @@ export default defineConfig({
 		outline: [2, 3],
 
 		editLink: {
-			pattern: 'https://github.com/hestiacp/hestiacp/edit/main/docs/:path',
+			pattern: 'https://github.com/OrbixtarTechnologies/orbixtar-panel/edit/main/docs/:path',
 			text: 'Edit this page on GitHub',
 		},
 
 		footer: {
 			message: 'Released under the GPLv3 License.',
-			copyright: 'Copyright © 2019-present Hestia Control Panel',
+			copyright: 'Copyright © 2026 Orbixtar Technologies and contributors',
 		},
 
-		algolia: {
-			appId: 'V04P0P5D2R',
-			apiKey: '7a90a3ac7f9313f174c50b0f301f7ec6',
-			indexName: 'hestia_cp',
+		search: {
+			provider: 'local',
 		},
 	},
 });
@@ -56,24 +52,21 @@ function nav() {
 		{ text: 'Features', link: '/features' },
 		{ text: 'Install', link: '/install' },
 		{ text: 'Documentation', link: '/docs/introduction/getting-started', activeMatch: '/docs/' },
-		{ text: 'Team', link: '/team' },
-		{ text: 'Demo', link: 'https://demo.hestiacp.com:8083/' },
-		{ text: 'Forum', link: 'https://forum.hestiacp.com/' },
-		{ text: 'Donate', link: '/donate' },
+		{ text: 'Support', link: 'https://github.com/OrbixtarTechnologies/orbixtar-panel/issues' },
 		{
 			text: `v${version}`,
 			items: [
 				{
 					text: 'Changelog',
-					link: 'https://github.com/hestiacp/hestiacp/blob/release/CHANGELOG.md',
+					link: 'https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/CHANGELOG.md',
 				},
 				{
 					text: 'Contributing',
-					link: 'https://github.com/hestiacp/hestiacp/blob/release/CONTRIBUTING.md',
+					link: 'https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/CONTRIBUTING.md',
 				},
 				{
 					text: 'Security policy',
-					link: 'https://github.com/hestiacp/hestiacp/blob/release/SECURITY.md',
+					link: 'https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/SECURITY.md',
 				},
 			],
 		},
@@ -103,6 +96,7 @@ function sidebarDocs() {
 				{ text: 'Mail domains', link: '/docs/user-guide/mail-domains' },
 				{ text: 'Notifications', link: '/docs/user-guide/notifications' },
 				{ text: 'Packages', link: '/docs/user-guide/packages' },
+				{ text: 'Reseller accounts', link: '/docs/user-guide/resellers' },
 				{ text: 'Statistics', link: '/docs/user-guide/statistics' },
 				{ text: 'Users', link: '/docs/user-guide/users' },
 				{ text: 'Web domains', link: '/docs/user-guide/web-domains' },
@@ -113,6 +107,7 @@ function sidebarDocs() {
 			collapsed: false,
 			items: [
 				{ text: 'Backup & restore', link: '/docs/server-administration/backup-restore' },
+				{ text: 'cPanel migrations', link: '/docs/server-administration/cpanel-migrations' },
 				{ text: 'Configuration', link: '/docs/server-administration/configuration' },
 				{ text: 'Customisation', link: '/docs/server-administration/customisation' },
 				{ text: 'Databases & phpMyAdmin', link: '/docs/server-administration/databases' },
@@ -120,8 +115,12 @@ function sidebarDocs() {
 				{ text: 'Email', link: '/docs/server-administration/email' },
 				{ text: 'File manager', link: '/docs/server-administration/file-manager' },
 				{ text: 'Firewall', link: '/docs/server-administration/firewall' },
+				{ text: 'Mail queue', link: '/docs/server-administration/mail-queue' },
 				{ text: 'OS upgrades', link: '/docs/server-administration/os-upgrades' },
+				{ text: 'Server health', link: '/docs/server-administration/server-health' },
 				{ text: 'Rest API', link: '/docs/server-administration/rest-api' },
+				{ text: 'Runtime profiles', link: '/docs/server-administration/runtime-profiles' },
+				{ text: 'Server fleet', link: '/docs/server-administration/server-fleet' },
 				{ text: 'SSL certificates', link: '/docs/server-administration/ssl-certificates' },
 				{ text: 'Web templates & caching', link: '/docs/server-administration/web-templates' },
 				{ text: 'Troubleshooting', link: '/docs/server-administration/troubleshooting' },
@@ -140,23 +139,12 @@ function sidebarDocs() {
 			],
 		},
 		{
-			text: 'Community',
-			collapsed: false,
-			items: [
-				{ text: 'Hestia Nginx Cache', link: '/docs/community/hestia-nginx-cache' },
-				{
-					text: 'Ioncube installer for Hestia',
-					link: '/docs/community/ioncube-hestia-installer',
-				},
-				{ text: 'Install script generator', link: '/docs/community/install-script-generator' },
-			],
-		},
-		{
 			text: 'Reference',
 			collapsed: false,
 			items: [
 				{ text: 'API', link: '/docs/reference/api' },
 				{ text: 'CLI', link: '/docs/reference/cli' },
+				{ text: 'cPanel & WHM parity', link: '/docs/reference/cpanel-whm-parity' },
 			],
 		},
 	];

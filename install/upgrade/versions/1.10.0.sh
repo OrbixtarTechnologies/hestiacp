@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version 1.10.0
+# OrbixPanel upgrade script for target version 1.10.0
 
 #######################################################################################
 #######                      Place additional commands below.                   #######
@@ -207,7 +207,7 @@ if $IS_UBUNTU2604; then
 fi
 
 # Updating logrotate conf for Hestia
-echo "[ * ] Updating logrotate conf for Hestia"
+echo "[ * ] Updating logrotate configuration for OrbixPanel"
 cp -f "$HESTIA"/install/deb/logrotate/hestia /etc/logrotate.d/hestia
 
 # Enhance - Update current composer installations

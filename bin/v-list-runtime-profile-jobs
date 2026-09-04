@@ -1,0 +1,81 @@
+#!/bin/bash
+# info: list tracked server runtime profile jobs
+# options: [FORMAT]
+#
+# example: v-list-runtime-profile-jobs json
+
+format=${1-shell}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+is_format_valid 'format'
+
+state_dir="/var/log/orbixpanel/runtime-profiles"
+mkdir -p "$state_dir"
+chmod 750 "$state_dir"
+
+json_escape() {
+	printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
+
+mapfile -t jobs < <(
+	find "$state_dir" -maxdepth 1 -type f -name '*.meta' -printf '%f\n' \
+		| sed 's/\.meta$//' \
+		| sort -r
+)
+
+read_job() {
+	local job_id=$1
+	local meta_file="$state_dir/$job_id.meta"
+	JOB_ID=$(sed -n 's/^JOB_ID=//p' "$meta_file")
+	VERSIONS=$(sed -n 's/^VERSIONS=//p' "$meta_file")
+	DEFAULT_VERSION=$(sed -n 's/^DEFAULT_VERSION=//p' "$meta_file")
+	STARTED=$(sed -n 's/^STARTED=//p' "$meta_file")
+	STATUS=$(head -n 1 "$state_dir/$job_id.status" 2> /dev/null || echo unknown)
+	PID=$(head -n 1 "$state_dir/$job_id.pid" 2> /dev/null || true)
+	if [[ "$STATUS" == queued || "$STATUS" == running:* ]] \
+		&& { [[ -z "$PID" ]] || ! kill -0 "$PID" 2> /dev/null; }; then
+		STATUS='interrupted'
+		printf '%s\n' "$STATUS" > "$state_dir/$job_id.status"
+	fi
+	CHANGES=$(wc -l < "$state_dir/$job_id.results" 2> /dev/null || echo 0)
+}
+
+json_list() {
+	echo '{'
+	local index=0
+	local total=${#jobs[@]}
+	local job
+	for job in "${jobs[@]:0:25}"; do
+		read_job "$job"
+		((index++))
+		printf '\t"%s": {"STATUS": "%s", "VERSIONS": "%s", "DEFAULT_VERSION": "%s", "CHANGES": "%s", "STARTED": "%s"}' \
+			"$(json_escape "$JOB_ID")" "$(json_escape "$STATUS")" "$(json_escape "$VERSIONS")" \
+			"$(json_escape "$DEFAULT_VERSION")" "$(json_escape "$CHANGES")" "$(json_escape "$STARTED")"
+		if ((index < total && index < 25)); then echo ','; else echo; fi
+	done
+	echo '}'
+}
+
+plain_list() {
+	local job
+	for job in "${jobs[@]:0:25}"; do
+		read_job "$job"
+		printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+			"$JOB_ID" "$STATUS" "$VERSIONS" "$DEFAULT_VERSION" "$CHANGES" "$STARTED"
+	done
+}
+
+case "$format" in
+	json) json_list ;;
+	plain) plain_list ;;
+	csv)
+		echo 'JOB_ID,STATUS,VERSIONS,DEFAULT_VERSION,CHANGES,STARTED'
+		plain_list | tr '\t' ','
+		;;
+	shell) plain_list | column -t -s $'\t' ;;
+esac
+
+exit 0

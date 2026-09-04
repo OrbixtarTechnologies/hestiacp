@@ -15,7 +15,7 @@ if (!empty($_GET["domain"]) && empty($_GET["account"])) {
 	if ($return_var != 0) {
 		$error = implode("<br>", $output);
 		if (empty($error)) {
-			$error = _("Error: Hestia did not return any output.");
+			$error = sprintf(_("Error: %s did not return any output."), get_panel_name());
 		}
 		$_SESSION["error_msg"] = $error;
 	}
@@ -42,7 +42,7 @@ if (!empty($_GET["domain"]) && !empty($_GET["account"])) {
 	if ($return_var != 0) {
 		$error = implode("<br>", $output);
 		if (empty($error)) {
-			$error = _("Error: Hestia did not return any output.");
+			$error = sprintf(_("Error: %s did not return any output."), get_panel_name());
 		}
 		$_SESSION["error_msg"] = $error;
 	}

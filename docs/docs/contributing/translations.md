@@ -1,3 +1,9 @@
-# Contributing to Hestia’s translations
+# Contributing to OrbixPanel translations
 
-If you are a non-English speaker and would like to improve the quality of the translations used in Hestia’s web interface, please go to [Hestia Translate](https://translate.hestiacp.com/) to review the translations database. For more information, please read [How to contribute with Translations](https://forum.hestiacp.com/t/how-to-contribute-with-translations/1664) on our forum.
+Translation improvements are reviewed in the OrbixPanel repository. Open an
+[issue](https://github.com/OrbixtarTechnologies/orbixtar-panel/issues) that names the
+language and affected screen, or submit a pull request with the updated locale entries.
+
+Keep product names as **OrbixPanel** and company references as **Orbixtar Technologies**.
+Do not translate technical compatibility identifiers such as command names, file paths,
+or the `HESTIA` environment variable.

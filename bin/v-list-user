@@ -51,6 +51,10 @@ json_list() {
         "TWOFA": "'$TWOFA'",
         "QRCODE": "'$QRCODE'",
         "ROLE": "'$ROLE'",
+        "OWNER": "'${OWNER:-$ROOT_USER}'",
+        "RESELLER": "'${RESELLER:-no}'",
+        "RESELLER_MAX_USERS": "'${RESELLER_MAX_USERS:-0}'",
+        "RESELLER_PACKAGES": "'$RESELLER_PACKAGES'",
         "SUSPENDED": "'$SUSPENDED'",
         "SUSPENDED_USERS": "'$SUSPENDED_USERS'",
         "SUSPENDED_WEB": "'$SUSPENDED_WEB'",
@@ -180,8 +184,10 @@ is_object_valid 'user' 'USER' "$user"
 USER=$user
 HOME=$HOMEDIR/$user
 source_conf "$HESTIA/data/users/$user/user.conf"
-U_USERS=$(awk -F"'" '/^U_USERS=/ {print $2}' "$HESTIA/data/users/$ROOT_USER/user.conf")
-SUSPENDED_USERS=$(awk -F"'" '/^SUSPENDED_USERS=/ {print $2}' "$HESTIA/data/users/$ROOT_USER/user.conf")
+if [ "$user" = "$ROOT_USER" ]; then
+	U_USERS=$(awk -F"'" '/^U_USERS=/ {print $2}' "$HESTIA/data/users/$ROOT_USER/user.conf")
+	SUSPENDED_USERS=$(awk -F"'" '/^SUSPENDED_USERS=/ {print $2}' "$HESTIA/data/users/$ROOT_USER/user.conf")
+fi
 
 # Listing data
 case $format in

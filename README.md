@@ -1,138 +1,72 @@
-<h1 align="center"><a href="https://www.hestiacp.com/">Hestia Control Panel</a></h1>
+# OrbixPanel
 
-![HestiaCP Web Interface screenshot](https://storage.hestiacp.com/hestiascreen.png)
+OrbixPanel is Orbixtar's open-source hosting and server management platform. It brings customer hosting tools and administrator operations into one responsive control panel, with an interface designed around familiar cPanel and WHM workflows while remaining an independent product.
 
-<h2 align="center">Lightweight and powerful control panel for the modern web</h2>
+> Development status: active. The `main` branch contains ongoing product work and should be evaluated in a non-production environment before deployment.
 
-<p align="center"><strong>Latest stable release:</strong> Version 1.10.4 | <a href="https://github.com/hestiacp/hestiacp/blob/release/CHANGELOG.md">View Changelog</a></p>
+## What OrbixPanel manages
 
-<p align="center">
-	<a href="https://www.hestiacp.com/">HestiaCP.com</a> |
-	<a href="https://docs.hestiacp.com/">Documentation</a> |
-	<a href="https://forum.hestiacp.com/">Forum</a>
-	<br/><br/>
-	<a href="https://github.com/hestiacp/hestiacp/actions/workflows/lint.yml">
-		<img src="https://github.com/hestiacp/hestiacp/actions/workflows/lint.yml/badge.svg" alt="Lint Status"/>
-	</a>
-	<a href="https://gurubase.io/g/hestia">
-		<img src="https://img.shields.io/badge/Gurubase-Ask%20Hestia%20Guru-006BFF" alt="Gurubase"/>
-	</a>
-</p>
+### Hosting accounts
 
-## **Welcome!**
+- Websites, domains, redirects, aliases, SSL/TLS, and application installers
+- DNS zones and records, including DNSSEC where supported
+- Email domains, mailboxes, aliases, forwarding, anti-spam, and antivirus controls
+- MariaDB/MySQL and PostgreSQL databases and users
+- Files, archives, backups, restores, disk usage, and transfer statistics
+- Cron jobs, account preferences, SSH keys, two-factor authentication, and web terminal access
 
-Hestia Control Panel is designed to provide administrators an easy to use web and command line interface, enabling them to quickly deploy and manage web domains, mail accounts, DNS zones, and databases from one central dashboard without the hassle of manually deploying and configuring individual components or services.
+### Server administration
 
-## Donate
+- Account provisioning, suspension, packages, quotas, and capability limits
+- Web, DNS, mail, database, and PHP service configuration
+- IP addresses, firewall rules, block lists, and brute-force protection
+- Service health, resource monitoring, logs, updates, and notifications
+- Local and remote backups, restore workflows, and incremental backup support
+- Access keys and API-based automation
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ST87LQH2CHGLA)<br /><br />
-Bitcoin : bc1q48jt5wg5jaj8g9zy7c3j03cv57j2m2u5anlutu<br>
-Ethereum : 0xfF3Dd2c889bd0Ff73d8085B84A314FC7c88e5D51<br>
-Binance: bnb1l4ywvw5ejfmsgjdcx8jn5lxj7zsun8ktfu7rh8<br>
-Smart Chain: 0xfF3Dd2c889bd0Ff73d8085B84A314FC7c88e5D51<br>
+See the [cPanel and WHM parity matrix](docs/docs/reference/cpanel-whm-parity.md) for implemented workflows, compatibility boundaries, and remaining engineering gaps.
 
-## Features and Services
+## Supported systems
 
-- Apache2 and NGINX with PHP-FPM
-- Multiple PHP versions (5.6 - 8.5, 8.5 as default)
-- DNS Server (Bind) with clustering capabilities
-- POP/IMAP/SMTP mail services with Anti-Virus, Anti-Spam, and Webmail (ClamAV, SpamAssassin, Sieve, Roundcube)
-- MariaDB/MySQL and/or PostgreSQL databases
-- Let's Encrypt SSL support with wildcard certificates
-- Firewall with brute-force attack detection and IP lists (iptables, fail2ban, and ipset).
+- Debian 11, 12, and 13
+- Ubuntu 22.04 LTS, 24.04 LTS, and 26.04 LTS
+- 64-bit systems using a clean operating-system installation
 
-## Supported platforms and operating systems
+KVM or LXC virtualization is recommended. Existing web, mail, DNS, or database stacks can conflict with services managed by OrbixPanel.
 
-- **Debian:** 13, 12, 11
-- **Ubuntu:** 26.04 LTS, 24.04 LTS, 22.04 LTS
+## Installation
 
-**NOTES:**
-
-- Hestia Control Panel does not support 32 bit operating systems!
-- Hestia Control Panel in combination with OpenVZ 7 or lower might have issues with DNS and/or firewall. If you use a Virtual Private Server we strongly advice you to use something based on KVM or LXC!
-
-## Installing Hestia Control Panel
-
-- **NOTE:** You must install Hestia Control Panel on top of a fresh operating system installation to ensure proper functionality.
-
-While we have taken every effort to make the installation process and the control panel interface as friendly as possible (even for new users), it is assumed that you will have some prior knowledge and understanding in the basics how to set up a Linux server before continuing.
-
-### Step 1: Log in
-
-To start the installation, you will need to be logged in as **root** or a user with super-user privileges. You can perform the installation either directly from the command line console or remotely via SSH:
+Install OrbixPanel only on a fresh supported server. Sign in as `root`, download the installer, review its options, and run it:
 
 ```bash
-ssh root@your.server
+curl -fsSL https://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install.sh -o orbixpanel-install.sh
+bash orbixpanel-install.sh --help
+bash orbixpanel-install.sh
 ```
 
-### Step 2: Download
+The installer provisions the selected services, configures the OrbixPanel identity, and displays the secure control-panel URL when setup completes.
 
-Download the installation script for the latest release:
+## Development
+
+The interface assets require Node.js and the npm version declared in `package.json`.
 
 ```bash
-wget https://raw.githubusercontent.com/hestiacp/hestiacp/release/install/hst-install.sh
+npm install
+npm run build
+npm run lint
 ```
 
-If the download fails due to an SSL validation error, please be sure you've installed the ca-certificate package on your system - you can do this with the following command:
+Server-level behavior is exercised by the Bats suites under `test/`. Many integration tests require a supported Linux test host or the repository's container test environment.
 
-```bash
-apt-get update && apt-get install ca-certificates
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change and [SECURITY.md](SECURITY.md) when reporting a vulnerability.
 
-### Step 3: Run
+## Project principles
 
-To begin the installation process, simply run the script and follow the on-screen prompts:
+- Orbixtar branding is the default across installation, runtime, documentation, and support surfaces.
+- Customer and administrator tools must be backed by real routes, commands, capability checks, and permission boundaries.
+- Familiar hosting-control-panel language may be used, but third-party trademarks, artwork, proprietary code, and misleading compatibility claims are not.
+- Responsive behavior, keyboard access, reduced-motion preferences, secure defaults, and recoverable operational workflows are release requirements.
 
-```bash
-bash hst-install.sh
-```
+## License and upstream acknowledgement
 
-You will receive a welcome email at the address specified during installation (if applicable) and on-screen instructions after the installation is completed to log in and access your server.
-
-### Custom installation
-
-You may specify a number of various flags during installation to only install the features in which you need. To view a list of available options, run:
-
-```bash
-bash hst-install.sh -h
-```
-
-Alternatively, You can use <https://hestiacp.com/install.html> which allows you to easily generate the installation command via GUI.
-
-## How to upgrade an existing installation
-
-Automatic Updates are enabled by default on new installations of Hestia Control Panel and can be managed from **Server Settings > Updates**. To manually check for and install available updates, use the apt package manager:
-
-```bash
-apt-get update
-apt-get upgrade
-```
-
-## Issues & Support Requests
-
-- If you encounter a general problem while using Hestia Control Panel and need help, please [visit our forum](https://forum.hestiacp.com/) to search for potential solutions or post a new thread where community members can assist.
-- Bugs and other reproducible issues should be filed via GitHub by [creating a new issue report](https://github.com/hestiacp/hestiacp/issues) so that our developers can investigate further. Please note that requests for support will be redirected to our forum.
-
-**IMPORTANT: We _cannot_ provide support for requests that do not describe the troubleshooting steps that have already been performed, or for third-party applications not related to Hestia Control Panel (such as WordPress). Please make sure that you include as much information as possible in your forum posts or issue reports!**
-
-## Contributions
-
-If you would like to contribute to the project, please [read our Contribution Guidelines](https://github.com/hestiacp/hestiacp/blob/release/CONTRIBUTING.md) for a brief overview of our development process and standards.
-
-## Copyright
-
-"Hestia Control Panel", "HestiaCP", and the Hestia logo are original copyright of hestiacp.com and the following restrictions apply:
-
-**You are allowed to:**
-
-- use the names "Hestia Control Panel", "HestiaCP", or the Hestia logo in any context directly related to the application or the project. This includes the application itself, local communities and news or blog posts.
-
-**You are not allowed to:**
-
-- sell or redistribute the application under the name "Hestia Control Panel", "HestiaCP", or similar derivatives, including the use of the Hestia logo in any brand or marketing materials related to revenue generating activities,
-- use the names "Hestia Control Panel", "HestiaCP", or the Hestia logo in any context that is not related to the project,
-- alter the name "Hestia Control Panel", "HestiaCP", or the Hestia logo in any way.
-
-## License
-
-Hestia Control Panel is licensed under [GPL v3](https://github.com/hestiacp/hestiacp/blob/release/LICENSE) license, and is based on the [VestaCP](https://vestacp.com/) project.<br>
+OrbixPanel is licensed under the GNU General Public License v3.0 or later. It is derived from the Hestia Control Panel and Vesta Control Panel codebases; their copyright notices and license obligations remain applicable to inherited code. Hestia, HestiaCP, cPanel, and WHM are trademarks of their respective owners and do not sponsor or endorse OrbixPanel.

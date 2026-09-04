@@ -108,7 +108,7 @@ fi
 #----------------------------------------------------------#
 
 if [ "$MODE" != "quiet" ]; then
-	echo "PMA Hestia-SSO plugin has been successfully installed"
+	echo "The OrbixPanel phpMyAdmin SSO plugin was installed successfully"
 fi
 $BIN/v-log-action "system" "Info" "Plugins" "phpMyAdmin Single Sign-On has been enabled."
 log_event "$OK" "$ARGUMENTS"

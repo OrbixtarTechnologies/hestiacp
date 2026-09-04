@@ -1,0 +1,33 @@
+#!/bin/bash
+# info: show the latest output for a tracked AutoSSL job
+# options: USER JOB
+#
+# example: v-get-autossl-log admin 20260904123000-1234-5678
+
+user=$1
+job=$2
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '2' "$#" 'USER JOB'
+is_format_valid 'user'
+is_object_valid 'user' 'USER' "$user"
+if [[ ! "$job" =~ ^[0-9]{14}-[0-9]+-[0-9]+$ ]]; then
+	check_result "$E_INVALID" "Invalid AutoSSL job ID"
+fi
+
+state_dir="/var/log/orbixpanel/autossl"
+meta_file="$state_dir/$job.meta"
+log_file="$state_dir/$job.log"
+if [[ ! -f "$meta_file" || -L "$meta_file" || ! -f "$log_file" || -L "$log_file" ]]; then
+	check_result "$E_NOTEXIST" "AutoSSL job log does not exist"
+fi
+job_user=$(sed -n 's/^USER=//p' "$meta_file")
+if [[ "$job_user" != "$user" ]]; then
+	check_result "$E_FORBIDEN" "AutoSSL job does not belong to $user"
+fi
+
+tail -n 300 -- "$log_file"
+exit 0

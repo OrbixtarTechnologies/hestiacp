@@ -1,0 +1,2 @@
+ROLE='user'
+COMMANDS='v-list-owned-users,v-list-owned-user'

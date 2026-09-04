@@ -28,27 +28,35 @@ source_conf "$HESTIA/conf/hestia.conf"
 check_args '1' "$#" 'VERSION'
 
 if [ -z "$WEB_BACKEND" ]; then
-	echo "Multiple php versions are not supported for modphp"
+	check_result "$E_DISABLED" "Multiple PHP versions are not supported for modphp"
 fi
 
 # Set file locations
 php_fpm="/etc/init.d/php$version-fpm"
 
 # Verify php version format
-if [[ ! $version =~ ^[0-9]\.[0-9]+ ]]; then
+if [[ ! $version =~ ^[0-9]+\.[0-9]+$ ]]; then
 	echo "The PHP version format is invalid, it should look like [0-9].[0-9]."
 	echo "Example:  7.0, 7.4"
-	exit
+	exit "$E_INVALID"
 fi
 
-# Remove backend template
-[ -f $HESTIA/data/templates/web/php-fpm/PHP-${version/\./_}.tpl ] && rm -f $HESTIA/data/templates/web/php-fpm/PHP-${version/\./_}.tpl
-
 # Check if php version exists
-version_check=$($BIN/v-list-sys-php plain | grep "$version")
+version_check=$($BIN/v-list-sys-php plain | grep -Fx -- "$version")
 if [ -z "$version_check" ]; then
 	echo "ERROR: Specified PHP version is not installed."
 	exit "$E_INVALID"
+fi
+
+# Never remove the active default runtime or a runtime assigned directly to a website.
+if "$BIN/v-list-default-php" plain | grep -Fxq -- "$version"; then
+	check_result "$E_INUSE" "PHP $version is the server default; select another default first"
+fi
+
+backend_template="PHP-${version/\./_}"
+if grep -R -E -q "^[[:space:]]*BACKEND='([^']+-)?${backend_template}'" \
+	"$HESTIA"/data/users/*/web.conf 2> /dev/null; then
+	check_result "$E_INUSE" "PHP $version is assigned to one or more web domains"
 fi
 
 # Perform verification if read-only mode is enabled
@@ -82,15 +90,22 @@ while kill -0 $BACK_PID > /dev/null 2>&1; do
 	sleep 0.5
 done
 
+wait "$BACK_PID"
+remove_result=$?
+
 # Do a blank echo to get the \n back
 echo
 
 # Check if removal was successful
-if [ -f "$php_fpm" ]; then
+if [ "$remove_result" -ne 0 ] || [ -f "$php_fpm" ]; then
 	echo "ERROR: Uninstallation failed, please run the following command manually for debugging:"
 	echo "apt-get purge $mph"
 	exit 1
 fi
+
+# Remove the selectable template only after package removal succeeds.
+[ -f "$HESTIA/data/templates/web/php-fpm/$backend_template.tpl" ] \
+	&& rm -f -- "$HESTIA/data/templates/web/php-fpm/$backend_template.tpl"
 
 # Cleanup php folder
 [[ -d /etc/php/$version ]] && rm -rf "/etc/php/$version"

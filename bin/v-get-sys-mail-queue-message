@@ -1,0 +1,38 @@
+#!/bin/bash
+# info: show queued Exim message headers and delivery log without reading its body
+# options: MESSAGE_ID
+#
+# example: v-get-sys-mail-queue-message 1abcDE-000001-xy
+
+message_id=$1
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '1' "$#" 'MESSAGE_ID'
+is_system_enabled "$MAIL_SYSTEM" 'MAIL'
+if [[ "$MAIL_SYSTEM" == "remote" ]]; then
+	check_result "$E_DISABLED" "Local mail service is not enabled"
+fi
+
+if ! [[ "$message_id" =~ ^[[:alnum:]]{6,}-[[:alnum:]]{6,}-[[:alnum:]]{2,}$ ]]; then
+	check_result "$E_INVALID" "Invalid mail queue message ID"
+fi
+if ! timeout 15 exiqgrep -i 2> /dev/null | grep -Fxq -- "$message_id"; then
+	check_result "$E_NOTEXIST" "Mail queue message $message_id does not exist"
+fi
+
+echo '--- Message headers ---'
+timeout 10 exim -Mvh "$message_id" 2>&1
+header_result=$?
+echo
+echo '--- Delivery log ---'
+timeout 10 exim -Mvl "$message_id" 2>&1
+log_result=$?
+
+if ((header_result != 0 || log_result != 0)); then
+	check_result "$E_PARSING" "Unable to read mail queue message $message_id"
+fi
+
+exit 0

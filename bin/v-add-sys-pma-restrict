@@ -76,7 +76,7 @@ $BIN/v-change-sys-config-value 'PMA_RESTRICT_ACCESS' "yes"
 #----------------------------------------------------------#
 
 if [ "$MODE" != "quiet" ]; then
-	echo "phpMyAdmin access has been restricted to Hestia Single Sign-On only"
+	echo "phpMyAdmin access has been restricted to OrbixPanel Single Sign-On only"
 fi
 
 # Logging

@@ -2,7 +2,7 @@
 
 #===========================================================================#
 #                                                                           #
-# Hestia Control Panel - Rebuild Function Library                           #
+# OrbixPanel - Rebuild Function Library                           #
 #                                                                           #
 #===========================================================================#
 
@@ -43,6 +43,12 @@ rebuild_user_conf() {
 	fi
 	if [ -z "${ROLE+x}" ]; then
 		sed -i "/PHPCLI/a ROLE='user'" $USER_DATA/user.conf
+	fi
+	if [ -z "${OWNER+x}" ]; then
+		sed -i "/ROLE=/a OWNER='$ROOT_USER'" $USER_DATA/user.conf
+	fi
+	if [ -z "${RESELLER+x}" ]; then
+		sed -i "/OWNER=/a RESELLER='no'\nRESELLER_MAX_USERS='0'\nRESELLER_PACKAGES=''" $USER_DATA/user.conf
 	fi
 	if [ -z "${THEME+x}" ]; then
 		sed -i "/LANGUAGE/a THEME=''" $USER_DATA/user.conf

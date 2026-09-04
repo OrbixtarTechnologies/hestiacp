@@ -1,5 +1,5 @@
 [Unit]
-Description=HestiaCP Web Terminal
+Description=OrbixPanel Web Terminal
 Documentation=https://hestiacp.com/docs/
 After=network.target
 

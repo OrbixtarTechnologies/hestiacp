@@ -50,7 +50,7 @@ case "$os" in
 		os_id="debian${release}"
 		;;
 	*)
-		echo "Error: unsupported distribution for determining Hestia version ($os)"
+		echo "Error: unsupported distribution for determining the OrbixPanel version ($os)"
 		exit 1
 		;;
 esac
@@ -448,7 +448,7 @@ if [ "x$(id -u)" != 'x0' ]; then
 fi
 
 if [ -d "/usr/local/hestia" ]; then
-	check_result 1 "Hestia install detected. Unable to continue"
+	check_result 1 "An OrbixPanel installation was detected. Unable to continue"
 fi
 
 type=$(grep "^ID=" /etc/os-release | cut -f 2 -d '=')
@@ -594,7 +594,7 @@ if [ -z "$withdebs" ] || [ ! -d "$withdebs" ]; then
 		echo -e "\e[33mERROR: Install script version does not match package version!\e[0m"
 		echo -e "\e[33mPlease download the installer from the release branch in order to continue:\e[0m"
 		echo ""
-		echo -e "\e[33mhttps://raw.githubusercontent.com/hestiacp/hestiacp/release/install/hst-install.sh\e[0m"
+		echo -e "\e[33mhttps://raw.githubusercontent.com/OrbixtarTechnologies/orbixtar-panel/main/install/hst-install.sh\e[0m"
 		echo ""
 		echo -e "\e[33mTo test pre-release versions, build the .deb packages and re-run the installer:\e[0m"
 		echo -e "  \e[33m./hst_autocompile.sh \e[1m--hestia branchname no\e[21m\e[0m"
@@ -618,7 +618,7 @@ case $architecture in
 		echo -e "\e[33mERROR: $architecture is currently not supported!\e[0m"
 		echo -e "\e[33mPlease verify the achitecture used is currenlty supported\e[0m"
 		echo ""
-		echo -e "\e[33mhttps://github.com/hestiacp/hestiacp/blob/main/README.md\e[0m"
+		echo -e "\e[33mhttps://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/README.md\e[0m"
 		echo ""
 		check_result 1 "Installation aborted"
 		;;
@@ -918,7 +918,7 @@ if [ "$mysql8" = 'yes' ]; then
 	done
 fi
 
-# Installing HestiaCP repo
+# Installing the compatibility package repository
 echo "[ * ] OrbixPanel"
 echo "deb [arch=$ARCH signed-by=/usr/share/keyrings/hestia-keyring.gpg] https://$RHOST/ $codename main" > $apt/hestia.list
 curl -s "https://$RHOST/pubkey.gpg" | gpg --dearmor | tee /usr/share/keyrings/hestia-keyring.gpg > /dev/null 2>&1
@@ -1177,7 +1177,7 @@ echo
 echo "========================================================================"
 echo
 
-# Install Hestia packages from local folder
+# Install OrbixPanel packages from a local folder
 if [ -n "$withdebs" ] && [ -d "$withdebs" ]; then
 	echo "[ * ] Installing local package files..."
 	echo "    - hestia core package"

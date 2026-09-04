@@ -1,6 +1,6 @@
 # Quick install app
 
-One of Hestia’s most requested feature is to add support for Softaculous. However, due to the required use of Ioncube in hestia-php and because we are against the use of proprietary software, we have instead developed our own **Quick install app** solution.
+One of OrbixPanel’s most requested feature is to add support for Softaculous. However, due to the required use of Ioncube in hestia-php and because we are against the use of proprietary software, we have instead developed our own **Quick install app** solution.
 
 More information can be found in the [hestia-quick-install repo](https://github.com/hestiacp/hestia-quick-install/blob/main/Example/ExampleSetup.php)
 
@@ -68,7 +68,7 @@ There are multiple ways to install and configure the web app after it is has bee
 - Using curl to provide configure the app over HTTP.
 
 ::: warning
-To prevent any issues, make that all commands are executed as the user, instead of `root` or `admin`. All the commands that are supplied by HestiaCP do this by default.
+To prevent any issues, make that all commands are executed as the user, instead of `root` or `admin`. All the commands that are supplied by OrbixPanel do this by default.
 :::
 
 ## Sharing

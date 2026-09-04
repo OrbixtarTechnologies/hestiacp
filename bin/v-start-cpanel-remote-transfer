@@ -1,0 +1,171 @@
+#!/bin/bash
+# info: securely resume a cPanel backup transfer over key-authenticated SFTP
+# options: HOST PORT REMOTE_BACKUP HOST_KEY_FINGERPRINT [IDENTITY] [RESTORE_MX]
+#
+# example: v-start-cpanel-remote-transfer source.example.com 22 /home/cpmove-client.tar.gz SHA256:abc... id_ed25519 no
+
+host=$1
+port=$2
+remote_backup=$3
+host_fingerprint=$4
+identity=${5-id_ed25519}
+restore_mx=${6-no}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '4' "$#" 'HOST PORT REMOTE_BACKUP HOST_KEY_FINGERPRINT [IDENTITY] [RESTORE_MX]'
+check_hestia_demo_mode
+
+if [[ "$host" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
+	is_ip_format_valid "$host"
+else
+	is_domain_format_valid "$host" 'host'
+fi
+if ! [[ "$port" =~ ^[0-9]{1,5}$ ]] || [ "$port" -lt 1 ] || [ "$port" -gt 65535 ]; then
+	check_result "$E_INVALID" "invalid SSH port"
+fi
+if [ "${#remote_backup}" -gt 240 ] || [[ ! "$remote_backup" =~ ^/[A-Za-z0-9._/-]+$ ]] || [[ "$remote_backup" == *"/../"* ]]; then
+	check_result "$E_INVALID" "invalid remote backup path"
+fi
+backup_name=$(basename -- "$remote_backup")
+if [ "${#backup_name}" -gt 180 ] || [[ ! "$backup_name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.(tar\.gz|tgz)$ ]]; then
+	check_result "$E_INVALID" "remote file must be a cPanel .tar.gz or .tgz backup"
+fi
+if ! [[ "$host_fingerprint" =~ ^SHA256:[A-Za-z0-9+/]{43}$ ]]; then
+	check_result "$E_INVALID" "host key fingerprint must use the SHA256 format"
+fi
+if ! [[ "$identity" =~ ^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$ ]]; then
+	check_result "$E_INVALID" "invalid SSH identity name"
+fi
+if [ "$restore_mx" != 'yes' ] && [ "$restore_mx" != 'no' ]; then
+	check_result "$E_INVALID" "RESTORE_MX must be yes or no"
+fi
+
+identity_file="/root/.ssh/$identity"
+if [ ! -f "$identity_file" ] || [ -L "$identity_file" ]; then
+	check_result "$E_NOTEXIST" "SSH identity $identity is not installed"
+fi
+resolved_identity=$(realpath -e -- "$identity_file")
+case "$resolved_identity" in
+	/root/.ssh/*) ;;
+	*) check_result "$E_FORBIDEN" "SSH identity must be stored in /root/.ssh" ;;
+esac
+if find "$resolved_identity" -perm /077 -print -quit | grep -q .; then
+	check_result "$E_FORBIDEN" "SSH identity permissions are too open"
+fi
+if [ -e "$BACKUP/$backup_name" ]; then
+	check_result "$E_EXISTS" "backup $backup_name already exists in $BACKUP"
+fi
+
+state_dir="/var/log/orbixpanel/migrations"
+mkdir -p "$state_dir"
+chmod 750 "$state_dir"
+transfer_key=$(printf '%s\n' "$host:$port:$remote_backup" | sha256sum | cut -c 1-20)
+partial_file="$BACKUP/.orbix-transfer-$transfer_key.partial"
+lock_file="$state_dir/remote-$transfer_key.lock"
+job_id="$(date '+%Y%m%d%H%M%S')-$$-$RANDOM"
+status_file="$state_dir/$job_id.status"
+log_file="$state_dir/$job_id.log"
+meta_file="$state_dir/$job_id.meta"
+started_at=$(date '+%FT%T%z')
+
+printf 'queued\n' > "$status_file"
+cat > "$meta_file" << EOF
+JOB_ID=$job_id
+BACKUP=$backup_name
+RESTORE_MX=$restore_mx
+STARTED=$started_at
+TYPE=remote
+SOURCE=$host:$port
+EOF
+
+nohup /bin/bash -c '
+	status_file=$1
+	lock_file=$2
+	host=$3
+	port=$4
+	remote_backup=$5
+	fingerprint=$6
+	identity_file=$7
+	partial_file=$8
+	final_file=$9
+	start_import=${10}
+	backup_name=${11}
+	restore_mx=${12}
+	exec 9>"$lock_file"
+	if ! flock -n 9; then
+		printf "failed:transfer already active\n" > "$status_file"
+		exit 1
+	fi
+	scanned_hosts=$(mktemp)
+	known_hosts=$(mktemp)
+	candidate_key=$(mktemp)
+	batch_file=$(mktemp)
+	trap '\''rm -f "$scanned_hosts" "$known_hosts" "$candidate_key" "$batch_file"'\'' EXIT
+	printf "preflight\n" > "$status_file"
+	if ! ssh-keyscan -T 10 -p "$port" "$host" > "$scanned_hosts" 2> /dev/null; then
+		printf "failed:source host key unavailable\n" > "$status_file"
+		exit 2
+	fi
+	while IFS= read -r key_line; do
+		printf "%s\n" "$key_line" > "$candidate_key"
+		if ssh-keygen -lf "$candidate_key" -E sha256 | awk '\''{print $2}'\'' | grep -Fxq "$fingerprint"; then
+			printf "%s\n" "$key_line" > "$known_hosts"
+			break
+		fi
+	done < "$scanned_hosts"
+	if [ ! -s "$known_hosts" ]; then
+		printf "failed:source host key mismatch\n" > "$status_file"
+		exit 2
+	fi
+	remote_size=$(ssh -p "$port" -i "$identity_file" -oBatchMode=yes -oIdentitiesOnly=yes -oStrictHostKeyChecking=yes -oUserKnownHostsFile="$known_hosts" -oConnectTimeout=15 "root@$host" "stat -c %s -- '\''$remote_backup'\''" 2> /dev/null)
+	if ! [[ "$remote_size" =~ ^[0-9]+$ ]]; then
+		printf "failed:remote backup size unavailable\n" > "$status_file"
+		exit 2
+	fi
+	partial_size=$(stat -c %s -- "$partial_file" 2> /dev/null || echo 0)
+	remaining_size=$((remote_size - partial_size))
+	[ "$remaining_size" -lt 0 ] && remaining_size=$remote_size
+	available_size=$(df -PB1 "$partial_file" 2> /dev/null | awk '\''NR == 2 {print $4}'\'')
+	if [ -z "$available_size" ]; then
+		available_size=$(df -PB1 "$(dirname "$partial_file")" | awk '\''NR == 2 {print $4}'\'')
+	fi
+	if [ "$available_size" -le $((remaining_size + 1073741824)) ]; then
+		printf "failed:insufficient backup storage\n" > "$status_file"
+		exit 2
+	fi
+	printf '\''reget "%s" "%s"\n'\'' "$remote_backup" "$partial_file" > "$batch_file"
+	printf "transferring\n" > "$status_file"
+	if ! sftp -b "$batch_file" -P "$port" -i "$identity_file" -oBatchMode=yes -oIdentitiesOnly=yes -oStrictHostKeyChecking=yes -oUserKnownHostsFile="$known_hosts" -oConnectTimeout=15 "root@$host"; then
+		printf "failed:transfer interrupted; retry to resume\n" > "$status_file"
+		exit 3
+	fi
+	printf "validating\n" > "$status_file"
+	if [ -L "$partial_file" ] || ! gzip -t -- "$partial_file"; then
+		printf "failed:download is not a valid gzip archive\n" > "$status_file"
+		exit 4
+	fi
+	chmod 600 "$partial_file"
+	if ! ln -- "$partial_file" "$final_file"; then
+		printf "failed:destination backup already exists\n" > "$status_file"
+		exit 5
+	fi
+	rm -f -- "$partial_file"
+	printf "queueing_import\n" > "$status_file"
+	if import_job=$("$start_import" "$backup_name" "$restore_mx"); then
+		printf "completed:import queued %s\n" "$import_job" > "$status_file"
+	else
+		exit_code=$?
+		printf "failed:import queue exit code %s\n" "$exit_code" > "$status_file"
+		exit "$exit_code"
+	fi
+' orbixpanel-remote-transfer "$status_file" "$lock_file" "$host" "$port" "$remote_backup" "$host_fingerprint" "$resolved_identity" "$partial_file" "$BACKUP/$backup_name" "$BIN/v-start-cpanel-import" "$backup_name" "$restore_mx" > "$log_file" 2>&1 < /dev/null &
+
+job_pid=$!
+printf '%s\n' "$job_pid" > "$state_dir/$job_id.pid"
+chmod 640 "$status_file" "$log_file" "$meta_file" "$state_dir/$job_id.pid"
+
+echo "$job_id"
+exit

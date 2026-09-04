@@ -4,7 +4,7 @@
 #
 # example: v-update-mail-templates
 #
-# This function for obtaining updated webmail templates from Hestia package.
+# This function obtains updated webmail templates from the OrbixPanel package.
 
 #----------------------------------------------------------#
 #                Variables & Functions                     #

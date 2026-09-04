@@ -1,0 +1,61 @@
+#!/bin/bash
+# info: list loaded extensions for one installed PHP runtime
+# options: VERSION [FORMAT]
+#
+# example: v-list-sys-php-extensions 8.4 json
+
+version=$1
+format=${2-shell}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '1' "$#" 'VERSION [FORMAT]'
+is_format_valid 'format'
+if [[ ! "$version" =~ ^[0-9]+\.[0-9]+$ ]]; then
+	check_result "$E_INVALID" "Invalid PHP version"
+fi
+if ! "$BIN/v-list-sys-php" plain | grep -Fxq -- "$version"; then
+	check_result "$E_NOTEXIST" "PHP $version is not installed"
+fi
+
+php_binary="/usr/bin/php$version"
+if [ ! -x "$php_binary" ]; then
+	check_result "$E_NOTEXIST" "PHP $version command-line runtime is unavailable"
+fi
+
+mapfile -t extensions < <("$php_binary" -m 2> /dev/null | sed '/^\[/d;/^[[:space:]]*$/d' | sort -fu)
+
+json_list() {
+	printf '[\n'
+	local index
+	for index in "${!extensions[@]}"; do
+		printf '\t"%s"' "${extensions[$index]//\"/\\\"}"
+		if ((index + 1 < ${#extensions[@]})); then
+			printf ','
+		fi
+		printf '\n'
+	done
+	printf ']\n'
+}
+
+plain_list() {
+	printf '%s\n' "${extensions[@]}"
+}
+
+case "$format" in
+	json) json_list ;;
+	plain) plain_list ;;
+	csv)
+		echo 'EXTENSION'
+		plain_list
+		;;
+	shell)
+		echo 'EXTENSION'
+		echo '---------'
+		plain_list
+		;;
+esac
+
+exit 0

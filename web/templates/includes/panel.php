@@ -74,18 +74,32 @@
 				>
 				<datalist id="orbix-tool-search-options">
 					<option value="<?= tohtml(_("Dashboard")) ?>" data-orbix-url="/dashboard/"></option>
+					<?php if ($_SESSION["userContext"] !== "admin" || !empty($_SESSION["look"])) { ?>
+						<option value="<?= tohtml(_("Hosting Overview")) ?>" data-orbix-url="/list/hosting/"></option>
+					<?php } ?>
+					<?php if ($_SESSION["userContext"] === "user" && empty($_SESSION["look"]) && ($panel[$user]["RESELLER"] ?? "no") === "yes") { ?>
+						<option value="<?= tohtml(_("Reseller Center")) ?>" data-orbix-url="/list/reseller/"></option>
+					<?php } ?>
 					<?php if ($_SESSION["userContext"] === "admin" && empty($_SESSION["look"])) { ?>
 						<option value="<?= tohtml(_("List Accounts")) ?>" data-orbix-url="/list/user/"></option>
 						<option value="<?= tohtml(_("Create a New Account")) ?>" data-orbix-url="/add/user/"></option>
 						<option value="<?= tohtml(_("Hosting Packages")) ?>" data-orbix-url="/list/package/"></option>
 						<option value="<?= tohtml(_("Service Manager")) ?>" data-orbix-url="/list/server/"></option>
+						<option value="<?= tohtml(_("Server Health")) ?>" data-orbix-url="/list/server-health/"></option>
+						<option value="<?= tohtml(_("Runtime Profiles")) ?>" data-orbix-url="/list/runtime-profiles/"></option>
+						<option value="<?= tohtml(_("Server Fleet")) ?>" data-orbix-url="/list/fleet/"></option>
 						<option value="<?= tohtml(_("IP Functions")) ?>" data-orbix-url="/list/ip/"></option>
-						<option value="<?= tohtml(_("Security Center")) ?>" data-orbix-url="/list/firewall/"></option>
+						<option value="<?= tohtml(_("Security Center")) ?>" data-orbix-url="/list/security/"></option>
+						<option value="<?= tohtml(_("Migration Center")) ?>" data-orbix-url="/list/migrations/"></option>
+						<?php if (!empty($_SESSION["MAIL_SYSTEM"]) && $_SESSION["MAIL_SYSTEM"] !== "remote") { ?><option value="<?= tohtml(_("Mail Queue")) ?>" data-orbix-url="/list/mail-queue/"></option><?php } ?>
 						<option value="<?= tohtml(_("System Updates")) ?>" data-orbix-url="/list/updates/"></option>
 					<?php } ?>
 					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["WEB_SYSTEM"]) && $panel[$user]["WEB_DOMAINS"] != "0")) { ?><option value="<?= tohtml(_("Websites")) ?>" data-orbix-url="/list/web/"></option><?php } ?>
+					<?php if (!empty($_SESSION["WEB_SYSTEM"]) && $panel[$user]["WEB_DOMAINS"] != "0") { ?><option value="<?= tohtml(_("SSL/TLS Status")) ?>" data-orbix-url="/list/ssl-status/"></option><?php } ?>
+					<?php if (!empty($_SESSION["WEB_SYSTEM"]) && $panel[$user]["WEB_DOMAINS"] != "0") { ?><option value="<?= tohtml(_("AutoSSL")) ?>" data-orbix-url="/list/ssl-status/"></option><?php } ?>
 					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["DNS_SYSTEM"]) && $panel[$user]["DNS_DOMAINS"] != "0")) { ?><option value="<?= tohtml(_("DNS Zone Manager")) ?>" data-orbix-url="/list/dns/"></option><?php } ?>
 					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["MAIL_SYSTEM"]) && $panel[$user]["MAIL_DOMAINS"] != "0")) { ?><option value="<?= tohtml(_("Email Accounts")) ?>" data-orbix-url="/list/mail/"></option><?php } ?>
+					<?php if (!empty($_SESSION["MAIL_SYSTEM"]) && $panel[$user]["MAIL_DOMAINS"] != "0") { ?><option value="<?= tohtml(_("Email Deliverability")) ?>" data-orbix-url="/list/mail-deliverability/"></option><?php } ?>
 					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["DB_SYSTEM"]) && $panel[$user]["DATABASES"] != "0")) { ?><option value="<?= tohtml(_("Databases")) ?>" data-orbix-url="/list/db/"></option><?php } ?>
 					<?php if ($_SESSION["userContext"] === "admin" || (!empty($_SESSION["CRON_SYSTEM"]) && $panel[$user]["CRON_JOBS"] != "0")) { ?><option value="<?= tohtml(_("Cron Jobs")) ?>" data-orbix-url="/list/cron/"></option><?php } ?>
 					<?php if ($_SESSION["userContext"] === "admin" || !empty($_SESSION["BACKUP_SYSTEM"])) { ?><option value="<?= tohtml(_("Backups")) ?>" data-orbix-url="/list/backup/"></option><?php } ?>
@@ -241,7 +255,7 @@
 									<!-- Hide 'Server Settings' button when impersonating 'admin' or other users -->
 								<?php } else { ?>
 									<li class="top-bar-menu-item">
-										<a title="<?= _("Server settings") ?>" class="top-bar-menu-link <?php if (in_array($TAB, ["SERVER", "IP", "RRD", "FIREWALL"])) {
+									<a title="<?= _("Server settings") ?>" class="top-bar-menu-link <?php if (in_array($TAB, ["SERVER", "SERVER_HEALTH", "RUNTIME", "FLEET", "MAIL_QUEUE", "IP", "RRD", "FIREWALL", "SECURITY", "MIGRATIONS"])) {
 	echo "active";
 } ?>" href="/list/server/">
 											<i class="fas fa-gear"></i>
@@ -362,6 +376,18 @@
 								<li>
 									<?= _("Suspended") ?>: <?= $panel[$user]["SUSPENDED_USERS"] ?>
 								</li>
+							</ul>
+						</a>
+					</li>
+				<?php } ?>
+
+				<?php if ($_SESSION["userContext"] === "user" && empty($_SESSION["look"]) && ($panel[$user]["RESELLER"] ?? "no") === "yes") { ?>
+					<li class="main-menu-item">
+						<a class="main-menu-item-link <?php if ($TAB === "RESELLER") echo "active"; ?>" href="/list/reseller/" title="<?= tohtml(_("Reseller Center")) ?>">
+							<p class="main-menu-item-label"><?= tohtml(_("CUSTOMERS")) ?><i class="fas fa-people-roof"></i></p>
+							<ul class="main-menu-stats">
+								<li><?= tohtml(_("Accounts")) ?>: <?= tohtml($panel[$user]["U_USERS"] ?? 0) ?> / <?= tohtml($panel[$user]["RESELLER_MAX_USERS"] ?? 0) ?></li>
+								<li><?= tohtml(_("Suspended")) ?>: <?= tohtml($panel[$user]["SUSPENDED_USERS"] ?? 0) ?></li>
 							</ul>
 						</a>
 					</li>

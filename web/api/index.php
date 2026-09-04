@@ -15,6 +15,7 @@ try {
 //die("Error: Disabled");
 define("HESTIA_DIR_BIN", "/usr/local/hestia/bin/");
 define("HESTIA_CMD", "/usr/bin/sudo /usr/local/hestia/bin/");
+const ORBIXPANEL_API_DOCS = "https://github.com/OrbixtarTechnologies/orbixtar-panel/tree/main/docs/docs/server-administration/rest-api.md";
 
 include $_SERVER["DOCUMENT_ROOT"] . "/inc/helpers.php";
 
@@ -27,6 +28,14 @@ include $_SERVER["DOCUMENT_ROOT"] . "/inc/helpers.php";
  * @param string $user
  * @return void
  */
+function api_response_headers(int $exit_code): void {
+	header("OrbixPanel-Exit-Code: $exit_code");
+	header("X-OrbixPanel-API-Version: 1");
+
+	// Retained for compatibility with existing clients during the OrbixPanel migration.
+	header("Hestia-Exit-Code: $exit_code");
+}
+
 function api_error($exit_code, $message, $hst_return, bool $add_log = false, $user = "system") {
 	$message = trim(is_array($message) ? implode("\n", $message) : $message);
 
@@ -38,7 +47,7 @@ function api_error($exit_code, $message, $hst_return, bool $add_log = false, $us
 
 	// Print the message with http_code and exit_code
 	$http_code = $exit_code >= 100 ? $exit_code : exit_code_to_http_code($exit_code);
-	header("Hestia-Exit-Code: $exit_code");
+	api_response_headers($exit_code);
 	http_response_code($http_code);
 	if ($hst_return == "code") {
 		echo $exit_code;
@@ -332,7 +341,7 @@ function api_connection(array $request_data) {
 		unset($output);
 	}
 
-	header("Hestia-Exit-Code: $cmd_exit_code");
+	api_response_headers($cmd_exit_code);
 
 	if ($hst_return == "code") {
 		echo $cmd_exit_code;
@@ -361,7 +370,7 @@ if (isset($_POST["access_key"]) || isset($_POST["user"]) || isset($_POST["hash"]
 } else {
 	api_error(
 		405,
-		"Error: data received is null or invalid, check https://hestiacp.com/docs/server-administration/rest-api.html",
+		"Error: data received is null or invalid, check " . ORBIXPANEL_API_DOCS,
 		"",
 	);
 }
@@ -388,7 +397,7 @@ if (isset($request_data["access_key"]) && isset($request_data["secret_key"])) {
 } else {
 	api_error(
 		405,
-		"Error: data received is null or invalid, check https://hestiacp.com/docs/server-administration/rest-api.html",
+		"Error: data received is null or invalid, check " . ORBIXPANEL_API_DOCS,
 		"",
 	);
 }

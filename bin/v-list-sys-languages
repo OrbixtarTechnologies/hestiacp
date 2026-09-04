@@ -4,7 +4,7 @@
 #
 # example: v-list-sys-languages json
 #
-# This function for obtaining the available languages for HestiaCP
+# This function obtains the languages available in OrbixPanel
 # Output is always in the ISO language code
 
 #----------------------------------------------------------#

@@ -16,6 +16,9 @@
 					<i class="fas fa-circle-plus icon-green"></i><?= tohtml( _("Add Mail Domain")) ?>
 				</a>
 			<?php } ?>
+			<a href="/list/mail-deliverability/" class="button button-secondary">
+				<i class="fas fa-shield-halved icon-blue"></i><?= tohtml(_("Email Deliverability")) ?>
+			</a>
 		</div>
 		<div class="toolbar-right">
 			<div class="toolbar-sorting">

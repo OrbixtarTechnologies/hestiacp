@@ -28,14 +28,14 @@ source_conf "$HESTIA/install/upgrade/upgrade.conf"
 check_args '1' "$#" 'VERSION'
 
 if [ -z "$WEB_BACKEND" ]; then
-	echo "Multiple php versions are not supported for modphp"
+	check_result "$E_DISABLED" "Multiple PHP versions are not supported for modphp"
 fi
 
 # Set file locations
 php_fpm="/etc/init.d/php$version-fpm"
 
 # Verify php version format
-if [[ ! $version =~ ^[0-9]+\.[0-9]+ ]]; then
+if [[ ! $version =~ ^[0-9]+\.[0-9]+$ ]]; then
 	echo "The specified PHP version format is invalid, it should look like [0-9].[0-9]."
 	echo "Example: 7.0, 7.4, 8.0"
 	exit "$E_INVALID"
@@ -48,7 +48,7 @@ if [ -f "$php_fpm" ] && [ -f "$HESTIA/data/templates/web/php-fpm/PHP-${version/\
 fi
 
 # Check if php version is supported
-if [[ ! "$multiphp_v" =~ $version ]]; then
+if ! printf '%s\n' "${multiphp_v[@]}" | grep -Fxq -- "$version"; then
 	echo "ERROR: Specified PHP version is not supported or does not exist."
 	exit "$E_INVALID"
 fi
@@ -98,13 +98,17 @@ while kill -0 $BACK_PID > /dev/null 2>&1; do
 	sleep 0.5
 done
 
+wait "$BACK_PID"
+install_result=$?
+
 # Do a blank echo to get the \n back
 echo
 
 # Check if installation was successful
-if [ ! -f "$php_fpm" ]; then
+if [ "$install_result" -ne 0 ] || [ ! -f "$php_fpm" ]; then
 	echo "ERROR: Installation failed, please run the following command manually for debugging:"
 	echo "apt-get install $mph"
+	exit "$E_CONNECT"
 fi
 
 # Check if required modules for apache2 are enabled

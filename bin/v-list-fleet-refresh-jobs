@@ -1,0 +1,67 @@
+#!/bin/bash
+# info: list tracked fleet refresh jobs
+# options: [FORMAT]
+#
+# example: v-list-fleet-refresh-jobs json
+
+format=${1-shell}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+is_format_valid 'format'
+
+state_dir="/var/log/orbixpanel/fleet-refresh"
+mkdir -p "$state_dir"
+chmod 750 "$state_dir"
+mapfile -t jobs < <(find "$state_dir" -maxdepth 1 -type f -name '*.meta' -printf '%f\n' | sed 's/\.meta$//' | sort -r)
+
+read_job() {
+	local job=$1
+	JOB_ID=$(sed -n 's/^JOB_ID=//p' "$state_dir/$job.meta")
+	TARGET=$(sed -n 's/^TARGET=//p' "$state_dir/$job.meta")
+	TOTAL=$(sed -n 's/^TOTAL=//p' "$state_dir/$job.meta")
+	STARTED=$(sed -n 's/^STARTED=//p' "$state_dir/$job.meta")
+	STATUS=$(head -n 1 "$state_dir/$job.status" 2> /dev/null || echo unknown)
+	PID=$(head -n 1 "$state_dir/$job.pid" 2> /dev/null || true)
+	if [[ "$STATUS" == queued || "$STATUS" == running:* ]] \
+		&& { [[ -z "$PID" ]] || ! kill -0 "$PID" 2> /dev/null; }; then
+		STATUS='interrupted'
+		printf '%s\n' "$STATUS" > "$state_dir/$job.status"
+	fi
+	ONLINE=$(grep -c '^online ' "$state_dir/$job.results" 2> /dev/null || true)
+	OFFLINE=$(grep -c '^offline ' "$state_dir/$job.results" 2> /dev/null || true)
+}
+
+json_list() {
+	echo '{'
+	local index=0 job
+	for job in "${jobs[@]:0:25}"; do
+		read_job "$job"
+		((index++))
+		printf '\t"%s": {"STATUS":"%s","TARGET":"%s","TOTAL":"%s","ONLINE":"%s","OFFLINE":"%s","STARTED":"%s"}' \
+			"$JOB_ID" "$STATUS" "$TARGET" "$TOTAL" "$ONLINE" "$OFFLINE" "$STARTED"
+		if ((index < ${#jobs[@]} && index < 25)); then echo ','; else echo; fi
+	done
+	echo '}'
+}
+
+plain_list() {
+	local job
+	for job in "${jobs[@]:0:25}"; do
+		read_job "$job"
+		printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$JOB_ID" "$STATUS" "$TARGET" "$TOTAL" "$ONLINE" "$OFFLINE" "$STARTED"
+	done
+}
+
+case "$format" in
+	json) json_list ;;
+	plain) plain_list ;;
+	csv)
+		echo 'JOB_ID,STATUS,TARGET,TOTAL,ONLINE,OFFLINE,STARTED'
+		plain_list | tr '\t' ','
+		;;
+	shell) plain_list | column -t -s $'\t' ;;
+esac
+
+exit 0

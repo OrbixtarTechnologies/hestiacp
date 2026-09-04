@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version 1.00.0-190618
+# OrbixPanel upgrade script for target version 1.00.0-190618
 
 #######################################################################################
 #######                      Place additional commands below.                   #######
@@ -191,11 +191,11 @@ fi
 
 # Remove old OS-specific installation files if they exist to free up space
 if [ -d $HESTIA/install/ubuntu ]; then
-	echo "[ * ] Removing old HestiaCP installation files for Ubuntu..."
+	echo "[ * ] Removing old OrbixPanel installation files for Ubuntu..."
 	rm -rf $HESTIA/install/ubuntu
 fi
 if [ -d $HESTIA/install/debian ]; then
-	echo "[ * ] Removing old HestiaCP installation files for Debian..."
+	echo "[ * ] Removing old OrbixPanel installation files for Debian..."
 	rm -rf $HESTIA/install/debian
 fi
 

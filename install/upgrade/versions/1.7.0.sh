@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version 1.7.0
+# OrbixPanel upgrade script for target version 1.7.0
 
 #######################################################################################
 #######                      Place additional commands below.                   #######
@@ -101,7 +101,7 @@ if echo "$BACKUP_SYSTEM" | grep "google" > /dev/null; then
 fi
 
 if [ -f /etc/logrotate.d/httpd-prerotate/awstats ]; then
-	echo "[ * ] Update Awstats prerotate to Hestia update method..."
+	echo "[ * ] Update AWStats prerotate to the OrbixPanel method..."
 	# Replace awstatst function
 	cp -f $HESTIA_INSTALL_DIR/logrotate/httpd-prerotate/awstats /etc/logrotate.d/httpd-prerotate/
 fi

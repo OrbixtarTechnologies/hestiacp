@@ -81,11 +81,14 @@ for user in $user_list; do
 	# New IFS
 	IFS=$'\n'
 
-	# Checking users
+	# Checking directly owned users. Root owns legacy and explicitly root-owned accounts.
 	if [ "$user" = "$ROOT_USER" ]; then
 		spnd=$(grep "SUSPENDED='yes'" $HESTIA/data/users/*/user.conf | wc -l)
 		SUSPENDED_USERS=$spnd
 		U_USERS=$("$BIN/v-list-users" list | wc -l)
+	else
+		U_USERS=$(grep -l "^OWNER='$user'$" "$HESTIA"/data/users/*/user.conf 2> /dev/null | wc -l)
+		SUSPENDED_USERS=$(grep -l "^OWNER='$user'$" "$HESTIA"/data/users/*/user.conf 2> /dev/null | xargs -r grep -l "^SUSPENDED='yes'$" | wc -l)
 	fi
 
 	ips=$(ls $HESTIA/data/ips)

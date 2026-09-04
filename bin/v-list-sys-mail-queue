@@ -1,0 +1,105 @@
+#!/bin/bash
+# info: list queued Exim messages without reading message bodies
+# options: [FORMAT]
+#
+# example: v-list-sys-mail-queue json
+
+format=${1-json}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+is_format_valid 'format'
+is_system_enabled "$MAIL_SYSTEM" 'MAIL'
+if [[ "$MAIL_SYSTEM" == "remote" ]]; then
+	check_result "$E_DISABLED" "Local mail service is not enabled"
+fi
+
+json_escape() {
+	printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\t/\\t/g' -e 's/\r/\\r/g' -e ':a;N;$!ba;s/\n/\\n/g'
+}
+
+queue_total=$(timeout 15 exim -bpc 2> /dev/null)
+check_result $? "Unable to read the Exim mail queue" "$E_CONNECT"
+queue_total=${queue_total:-0}
+if ! [[ "$queue_total" =~ ^[0-9]+$ ]]; then
+	check_result "$E_PARSING" "Exim returned an invalid queue count"
+fi
+
+queue_snapshot=$(mktemp /tmp/orbixpanel-mail-queue.XXXXXX)
+trap 'rm -f "$queue_snapshot"' EXIT
+timeout 20 exim -bp > "$queue_snapshot" 2> /dev/null
+check_result $? "Unable to read the complete Exim mail queue" "$E_CONNECT"
+
+mapfile -t queue_rows < <(
+	awk '
+		function emit() {
+			if (message_id != "") {
+				print age "\034" size "\034" message_id "\034" sender "\034" frozen "\034" recipients
+			}
+		}
+		$3 ~ /^[[:alnum:]]{6,}-[[:alnum:]]{6,}-[[:alnum:]]{2,}$/ {
+			emit()
+			age = $1
+			size = $2
+			message_id = $3
+			sender = $4
+			frozen = index($0, "*** frozen ***") ? "yes" : "no"
+			recipients = ""
+			next
+		}
+		message_id != "" && /^[[:space:]]+/ {
+			line = $0
+			sub(/^[[:space:]]+/, "", line)
+			if (line != "" && line !~ /^\*\*\*/) {
+				recipients = recipients == "" ? line : recipients ", " line
+			}
+		}
+		END { emit() }
+	' "$queue_snapshot" | head -n 250
+)
+
+json_list() {
+	echo '{'
+	printf '\t"summary": {"TOTAL": "%s", "RETURNED": "%s", "TRUNCATED": "%s"},\n' \
+		"$queue_total" "${#queue_rows[@]}" "$([[ $queue_total -gt ${#queue_rows[@]} ]] && echo yes || echo no)"
+	printf '\t"messages": {\n'
+
+	local index=0
+	local age size message_id sender frozen recipients
+	for row in "${queue_rows[@]}"; do
+		IFS=$'\034' read -r age size message_id sender frozen recipients <<< "$row"
+		((index++))
+		printf '\t\t"%s": {"AGE": "%s", "SIZE": "%s", "SENDER": "%s", "RECIPIENTS": "%s", "FROZEN": "%s"}' \
+			"$(json_escape "$message_id")" "$(json_escape "$age")" "$(json_escape "$size")" \
+			"$(json_escape "$sender")" "$(json_escape "$recipients")" "$(json_escape "$frozen")"
+		if ((index < ${#queue_rows[@]})); then
+			echo ','
+		else
+			echo
+		fi
+	done
+
+	echo -e '\t}\n}'
+}
+
+plain_list() {
+	local age size message_id sender frozen recipients
+	for row in "${queue_rows[@]}"; do
+		IFS=$'\034' read -r age size message_id sender frozen recipients <<< "$row"
+		printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$message_id" "$age" "$size" "$sender" "$recipients" "$frozen"
+	done
+}
+
+case $format in
+	json) json_list ;;
+	plain) plain_list ;;
+	csv)
+		echo 'MESSAGE_ID,AGE,SIZE,SENDER,RECIPIENTS,FROZEN'
+		plain_list | sed 's/"/""/g; s/\t/","/g; s/^/"/; s/$/"/'
+		;;
+	shell) plain_list | column -t -s $'\t' ;;
+esac
+
+exit 0

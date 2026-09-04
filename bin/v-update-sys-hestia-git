@@ -245,7 +245,7 @@ GIT_REP='https://raw.githubusercontent.com/'$REPO'/'$branch'/src/deb'
 HESTIA_ARCHIVE_LINK='https://github.com/'$REPO'/archive/'$branch'.tar.gz'
 echo $HESTIA_ARCHIVE_LINK
 
-echo "Building Hestia Control Panel package..."
+echo "Building OrbixPanel package..."
 
 BUILD_DIR_HESTIA=$BUILD_DIR/hestia_$HESTIA_V
 
@@ -305,7 +305,7 @@ get_branch_file 'src/deb/hestia/postinst' "$BUILD_DIR_HESTIA/DEBIAN/postinst"
 chmod +x $BUILD_DIR_HESTIA/DEBIAN/postinst
 chmod +x $BUILD_DIR_HESTIA/DEBIAN/preinst
 
-echo Building Hestia DEB
+echo Building OrbixPanel DEB packages
 dpkg-deb -Zxz --build $BUILD_DIR_HESTIA $DEB_DIR
 
 # clear up the source folder

@@ -20,7 +20,7 @@ source_conf "$HESTIA/conf/hestia.conf"
 ###############################################################
 #             Set new version numbers for packages            #
 ###############################################################
-# Hestia Control Panel
+# OrbixPanel
 # Added the sed command to strip deb package revision suffixes:
 # 1.10.0-1+debian13 becomes 1.10.0
 # 1.10.0-1+debian13~alpha becomes 1.10.0~alpha

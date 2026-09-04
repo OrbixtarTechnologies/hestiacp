@@ -4,7 +4,7 @@
 #
 # example: v-update-dns-templates
 #
-# This function for obtaining updated dns templates from Hestia package.
+# This function obtains updated DNS templates from the OrbixPanel package.
 
 #----------------------------------------------------------#
 #                Variables & Functions                     #

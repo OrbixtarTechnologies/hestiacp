@@ -1,14 +1,14 @@
 # REST API
 
-The Hestia REST API is available to perform core functions of the Control Panel. For example, we use it internally to synchronise DNS clusters and to integrate the WHMCS billing system. The API can also be used to create new user accounts, domains, databases or even to build an alternative web interface.
+The OrbixPanel REST API is available to perform core functions of the Control Panel. For example, we use it internally to synchronise DNS clusters and to integrate the WHMCS billing system. The API can also be used to create new user accounts, domains, databases or even to build an alternative web interface.
 
 The [API reference](../reference/api) provides PHP code samples demonstrating how you can integrate the API into your application or script. However, you also can use any other language to communicate with the API.
 
-With the release of Hestia v1.6.0, we have introduced a more advanced API system and it will allow non-admin users to use specific commands.
+With the release of OrbixPanel v1.6.0, we have introduced a more advanced API system and it will allow non-admin users to use specific commands.
 
 ## I’m unable to connect to the API
 
-With the release of Hestia v1.4.0, we have decided the security needed to be tightened. If you want to connect to the API from a remote server, you will first need to whitelist its IP address. To add multiple addresses, separate them with a new line. To bypass the ip filtering, remove any existing ips and write : `allow-all`
+With the release of OrbixPanel v1.4.0, we have decided the security needed to be tightened. If you want to connect to the API from a remote server, you will first need to whitelist its IP address. To add multiple addresses, separate them with a new line. To bypass the ip filtering, remove any existing ips and write : `allow-all`
 
 ## Can I disable the API?
 
@@ -74,6 +74,56 @@ COMMANDS='v-list-web-domains,v-add-web-domain,v-list-web-domain'
 - Commands: Comma separated list with all the command you require.
 
 If the software you are using already supports the hash format, use `ACCESS_KEY:SECRET_KEY` instead of your old API key.
+
+## cPanel UAPI compatibility
+
+OrbixPanel provides a permission-checked compatibility layer for selected read-only cPanel UAPI calls. Create an access key using the bundled `uapi-read` permission profile, then combine the returned access and secret keys into one opaque token:
+
+```bash
+v-add-access-key example uapi-read "cPanel UAPI compatibility" json
+```
+
+Send the token using cPanel's standard authorization header. OrbixPanel uses a period between its access-key and secret-key values:
+
+```text
+Authorization: cpanel example:ACCESS_KEY.SECRET_KEY
+```
+
+Supported routes:
+
+| Route                              | OrbixPanel source                                     |
+| ---------------------------------- | ----------------------------------------------------- |
+| `/execute/Email/list_mail_domains` | Owned mail domains                                    |
+| `/execute/Email/list_pops`         | Owned mailboxes, usage, quota, and suspension state   |
+| `/execute/Email/count_pops`        | Total owned mailboxes                                 |
+| `/execute/WebVhosts/list_domains`  | Owned web domains, document roots, addresses, and SSL |
+
+Responses use the cPanel UAPI version 3 envelope. Unsupported modules and functions return `404` instead of silently approximating behavior. The normal OrbixPanel API enablement, source-IP allow list, user API policy, access-key command permissions, account suspension, and ownership checks all remain enforced.
+
+The implemented query subset is intentionally explicit: `Email/list_mail_domains` accepts `select`, and `Email/list_pops` accepts `domain` and `skip_main`. Other query parameters return a UAPI error rather than being silently ignored. `skip_main` is accepted for client compatibility; it does not change the result because OrbixPanel does not synthesize a mailbox for the Unix account.
+
+## WHM API 1 compatibility
+
+Administrators and enabled resellers can use the bundled `whm-read` permission profile for owner-scoped hosting-account inventory:
+
+```bash
+v-add-access-key admin whm-read "WHM account inventory" json
+```
+
+Use the same combined access-key and secret-key token with WHM's authorization scheme:
+
+```text
+Authorization: whm admin:ACCESS_KEY.SECRET_KEY
+```
+
+Supported routes:
+
+| Route                      | Scope                                                                            |
+| -------------------------- | -------------------------------------------------------------------------------- |
+| `/json-api/listaccts`      | All non-administrator accounts for admin; directly owned accounts for a reseller |
+| `/json-api/accountsummary` | One non-administrator account, subject to the same ownership check               |
+
+Both routes require `api.version=1`. `accountsummary` also requires `user=ACCOUNT`. Responses use the WHM API 1 `data` and `metadata` envelope. OrbixPanel has no single primary-domain designation, so the compatibility summary returns an empty `domain` value instead of guessing from a multi-domain account. Sort, filter, and pagination parameters are not yet implemented and return a compatibility error.
 
 ## Create an API key
 

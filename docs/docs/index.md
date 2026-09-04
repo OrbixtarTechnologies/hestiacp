@@ -16,6 +16,7 @@
 - [Mail domains](/docs/user-guide/mail-domains)
 - [Notifications](/docs/user-guide/notifications)
 - [Packages](/docs/user-guide/packages)
+- [Reseller accounts](/docs/user-guide/resellers)
 - [Statistics](/docs/user-guide/statistics)
 - [Users](/docs/user-guide/users)
 - [Web domains](/docs/user-guide/web-domains)
@@ -47,8 +48,8 @@
 
 ## Community
 
-- [Hestia Nginx Cache](/docs/community/hestia-nginx-cache)
-- [Ioncube installer for Hestia](/docs/community/ioncube-hestia-installer)
+- [OrbixPanel Nginx Cache](/docs/community/hestia-nginx-cache)
+- [Ioncube installer for OrbixPanel](/docs/community/ioncube-hestia-installer)
 - [Install script generator](/docs/community/install-script-generator)
 
 ## Reference

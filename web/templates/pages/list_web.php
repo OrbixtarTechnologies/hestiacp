@@ -7,6 +7,9 @@
 					<i class="fas fa-circle-plus icon-green"></i><?= tohtml( _("Add Web Domain")) ?>
 				</a>
 			<?php } ?>
+			<a href="/list/ssl-status/" class="button button-secondary">
+				<i class="fas fa-lock icon-blue"></i><?= tohtml(_("SSL/TLS Status")) ?>
+			</a>
 		</div>
 		<div class="toolbar-right">
 			<div class="toolbar-sorting">

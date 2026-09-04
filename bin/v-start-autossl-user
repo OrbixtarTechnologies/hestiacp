@@ -1,0 +1,168 @@
+#!/bin/bash
+# info: start a tracked AutoSSL job for selected web domains
+# options: USER DOMAINS
+#
+# example: v-start-autossl-user admin example.com,www.example.net
+
+user=$1
+domains=$2
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source "$HESTIA/func/domain.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '2' "$#" 'USER DOMAINS'
+is_format_valid 'user'
+is_system_enabled "$WEB_SYSTEM" 'WEB_SYSTEM'
+is_system_enabled "$WEB_SSL" 'SSL_SUPPORT'
+is_object_valid 'user' 'USER' "$user"
+is_object_unsuspended 'user' 'USER' "$user"
+check_hestia_demo_mode
+
+if [[ -z "$domains" || ${#domains} -gt 10000 || "$domains" =~ [[:space:]] ]]; then
+	check_result "$E_INVALID" "Select one or more valid web domains"
+fi
+
+IFS=',' read -r -a requested_domains <<< "$domains"
+if ((${#requested_domains[@]} == 0 || ${#requested_domains[@]} > 100)); then
+	check_result "$E_LIMIT" "AutoSSL jobs support between 1 and 100 domains"
+fi
+
+state_dir="/var/log/orbixpanel/autossl"
+mkdir -p "$state_dir"
+chmod 750 "$state_dir"
+
+submission_lock="$state_dir/$user.submit.lock"
+exec 8> "$submission_lock"
+flock -x 8
+for existing_meta in "$state_dir"/*.meta; do
+	[[ -f "$existing_meta" ]] || continue
+	existing_user=$(sed -n 's/^USER=//p' "$existing_meta")
+	[[ "$existing_user" == "$user" ]] || continue
+	existing_job=${existing_meta##*/}
+	existing_job=${existing_job%.meta}
+	existing_status=$(head -n 1 "$state_dir/$existing_job.status" 2> /dev/null || true)
+	existing_pid=$(head -n 1 "$state_dir/$existing_job.pid" 2> /dev/null || true)
+	if [[ "$existing_status" == queued || "$existing_status" == running:* ]] \
+		&& [[ "$existing_pid" =~ ^[0-9]+$ ]] \
+		&& kill -0 "$existing_pid" 2> /dev/null; then
+		check_result "$E_INUSE" "AutoSSL job $existing_job is already active for $user"
+	fi
+done
+
+job_id="$(date '+%Y%m%d%H%M%S')-$$-$RANDOM"
+status_file="$state_dir/$job_id.status"
+log_file="$state_dir/$job_id.log"
+meta_file="$state_dir/$job_id.meta"
+task_file="$state_dir/$job_id.tasks"
+result_file="$state_dir/$job_id.results"
+pid_file="$state_dir/$job_id.pid"
+lock_file="$state_dir/$user.lock"
+started_at=$(date '+%FT%T%z')
+
+cleanup_pending=yes
+cleanup_incomplete_job() {
+	if [[ "$cleanup_pending" == yes ]]; then
+		rm -f -- "$status_file" "$log_file" "$meta_file" "$task_file" "$result_file" "$pid_file"
+	fi
+}
+trap cleanup_incomplete_job EXIT
+
+: > "$task_file"
+: > "$result_file"
+: > "$log_file"
+declare -A unique_domains=()
+for domain in "${requested_domains[@]}"; do
+	is_domain_format_valid "$domain"
+	if [[ -n "${unique_domains[$domain]:-}" ]]; then
+		continue
+	fi
+	is_object_valid 'web' 'DOMAIN' "$domain"
+	is_object_unsuspended 'web' 'DOMAIN' "$domain"
+	ssl_enabled=$(get_object_value 'web' 'DOMAIN' "$domain" '$SSL')
+	certificate="$HESTIA/data/users/$user/ssl/$domain.crt"
+	if [[ -L "$certificate" ]]; then
+		check_result "$E_FORBIDEN" "Certificate path for $domain must not be a symbolic link"
+	fi
+	if [[ "$ssl_enabled" == yes && -f "$certificate" ]] \
+		&& openssl x509 -checkend 2592000 -noout -in "$certificate" > /dev/null 2>&1; then
+		check_result "$E_INUSE" "Certificate for $domain is already valid for more than 30 days"
+	fi
+	aliases=$(get_object_value 'web' 'DOMAIN' "$domain" '$ALIAS')
+	if [[ -n "$aliases" ]]; then
+		is_alias_format_valid "$aliases"
+	fi
+	printf '%s %s\n' "$domain" "$aliases" >> "$task_file"
+	unique_domains[$domain]=1
+done
+
+total=${#unique_domains[@]}
+if ((total == 0)); then
+	check_result "$E_INVALID" "Select one or more unique web domains"
+fi
+
+printf 'queued\n' > "$status_file"
+cat > "$meta_file" << EOF
+JOB_ID=$job_id
+USER=$user
+DOMAINS=$(
+	IFS=,
+	echo "${!unique_domains[*]}"
+)
+TOTAL=$total
+STARTED=$started_at
+EOF
+
+nohup /bin/bash -c '
+	status_file=$1
+	log_file=$2
+	task_file=$3
+	result_file=$4
+	lock_file=$5
+	issuer=$6
+	user=$7
+	total=$8
+	exec 9>"$lock_file"
+	if ! flock -n 9; then
+		printf "failed:another AutoSSL job is active for this account\n" > "$status_file"
+		exit 1
+	fi
+	printf "running:0/%s\n" "$total" > "$status_file"
+	processed=0
+	succeeded=0
+	failed=0
+	while read -r domain aliases; do
+		printf "\n== %s ==\n" "$domain" >> "$log_file"
+		if timeout 900 "$issuer" "$user" "$domain" "$aliases" >> "$log_file" 2>&1; then
+			printf "success %s\n" "$domain" >> "$result_file"
+			((succeeded++))
+		else
+			exit_code=$?
+			printf "failed %s %s\n" "$domain" "$exit_code" >> "$result_file"
+			((failed++))
+		fi
+		((processed++))
+		printf "running:%s/%s\n" "$processed" "$total" > "$status_file"
+		if ((processed < total)); then
+			sleep 10
+		fi
+	done < "$task_file"
+	if ((failed > 0)); then
+		printf "completed_with_errors:%s/%s\n" "$processed" "$total" > "$status_file"
+	else
+		printf "completed:%s/%s\n" "$processed" "$total" > "$status_file"
+	fi
+' orbixpanel-autossl "$status_file" "$log_file" "$task_file" "$result_file" "$lock_file" "$BIN/v-add-letsencrypt-domain" "$user" "$total" < /dev/null &
+
+job_pid=$!
+printf '%s\n' "$job_pid" > "$pid_file"
+chmod 640 "$status_file" "$log_file" "$meta_file" "$task_file" "$result_file" "$pid_file"
+cleanup_pending=no
+flock -u 8
+
+$BIN/v-log-action "$user" "Info" "Web" "AutoSSL job started (Job: $job_id, Domains: $total)."
+log_event "$OK" "$ARGUMENTS"
+
+echo "$job_id"
+exit 0

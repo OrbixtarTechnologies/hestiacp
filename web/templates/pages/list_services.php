@@ -2,6 +2,15 @@
 <div class="toolbar">
 	<div class="toolbar-inner">
 		<div class="toolbar-buttons">
+			<a href="/list/server-health/" class="button button-secondary">
+				<i class="fas fa-heart-pulse icon-blue"></i><?= tohtml(_("Server Health")) ?>
+			</a>
+			<a href="/list/runtime-profiles/" class="button button-secondary">
+				<i class="fas fa-cubes-stacked icon-green"></i><?= tohtml(_("Runtime Profiles")) ?>
+			</a>
+			<a href="/list/fleet/" class="button button-secondary">
+				<i class="fas fa-network-wired icon-blue"></i><?= tohtml(_("Server Fleet")) ?>
+			</a>
 			<a href="/edit/server/" class="button button-secondary">
 				<i class="fas fa-gear icon-maroon"></i><?= tohtml( _("Configure")) ?>
 			</a>

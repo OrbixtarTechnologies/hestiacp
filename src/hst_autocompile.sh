@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # set -e
-# Autocompile Script for HestiaCP package Files.
+# Autocompile Script for OrbixPanel package files.
 # For building from local source folder use "~localsrc" keyword as hesia branch name,
 #   and the script will not try to download the arhive from github, since '~' char is
 #   not accepted in branch name.
@@ -121,7 +121,7 @@ usage() {
 	echo "following the branch name."
 	echo ""
 	echo "Example: bash hst_autocompile.sh --hestia develop Y"
-	echo "This would install a Hestia Control Panel package compiled with the"
+	echo "This would install a OrbixPanel package compiled with the"
 	echo "develop branch code."
 	echo ""
 	echo "To cross-build hestia-nginx/hestia-php/hestia-web-terminal for the other"
@@ -457,7 +457,7 @@ if [ "$HESTIA_DEBUG" ]; then
 fi
 
 # Generate Links for sourcecode
-HESTIA_ARCHIVE_LINK='https://github.com/hestiacp/hestiacp/archive/'$branch'.tar.gz'
+HESTIA_ARCHIVE_LINK='https://github.com/OrbixtarTechnologies/orbixtar-panel/archive/'$branch'.tar.gz'
 if [[ $NGINX_V =~ - ]]; then
 	NGINX='https://nginx.org/download/nginx-'$(echo $NGINX_V | cut -d"-" -f1)'.tar.gz'
 else
@@ -812,7 +812,7 @@ if [ "$HESTIA_B" = true ]; then
 		supported_os=$(get_distro_suffix)
 	fi
 
-	echo "Building Hestia Control Panel package..."
+	echo "Building OrbixPanel package..."
 
 	BUILD_DIR_HESTIA=$BUILD_DIR/hestia_$HESTIA_V
 

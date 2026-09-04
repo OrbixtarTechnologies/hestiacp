@@ -1,0 +1,34 @@
+#!/bin/bash
+# info: retry delivery of one queued Exim message
+# options: MESSAGE_ID
+#
+# example: v-retry-sys-mail-queue-message 1abcDE-000001-xy
+
+message_id=$1
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_hestia_demo_mode
+check_args '1' "$#" 'MESSAGE_ID'
+is_system_enabled "$MAIL_SYSTEM" 'MAIL'
+if [[ "$MAIL_SYSTEM" == "remote" ]]; then
+	check_result "$E_DISABLED" "Local mail service is not enabled"
+fi
+
+if ! [[ "$message_id" =~ ^[[:alnum:]]{6,}-[[:alnum:]]{6,}-[[:alnum:]]{2,}$ ]]; then
+	check_result "$E_INVALID" "Invalid mail queue message ID"
+fi
+if ! timeout 15 exiqgrep -i 2> /dev/null | grep -Fxq -- "$message_id"; then
+	check_result "$E_NOTEXIST" "Mail queue message $message_id does not exist"
+fi
+
+timeout 30 exim -M "$message_id"
+result=$?
+check_result "$result" "Mail queue message $message_id could not be retried" "$E_CONNECT"
+
+$BIN/v-log-action "system" "Info" "System" "Mail queue message retried (ID: $message_id)."
+log_event "$OK" "$ARGUMENTS"
+
+exit 0

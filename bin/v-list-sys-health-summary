@@ -1,0 +1,72 @@
+#!/bin/bash
+# info: list system capacity and load metrics for the Server Health interface
+# options: [FORMAT]
+#
+# example: v-list-sys-health-summary json
+
+format=${1-json}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+is_format_valid 'format'
+
+read -r disk_total disk_used disk_available disk_percent < <(
+	df -Pk / | awk 'NR == 2 {gsub(/%/, "", $5); print $2, $3, $4, $5}'
+)
+read -r memory_total memory_used memory_available < <(
+	free -m | awk '/^Mem:/ {print $2, $3, $7}'
+)
+read -r load_one load_five load_fifteen _ < /proc/loadavg
+
+cpu_cores=$(getconf _NPROCESSORS_ONLN 2> /dev/null || nproc)
+uptime_seconds=$(cut -d. -f1 /proc/uptime)
+disk_percent=${disk_percent:-0}
+memory_total=${memory_total:-0}
+memory_used=${memory_used:-0}
+memory_available=${memory_available:-0}
+memory_percent=0
+if ((memory_total > 0)); then
+	memory_percent=$((memory_used * 100 / memory_total))
+fi
+
+json_list() {
+	cat << JSON
+{
+	"health": {
+		"CPU_CORES": "${cpu_cores:-0}",
+		"LOAD_ONE": "${load_one:-0}",
+		"LOAD_FIVE": "${load_five:-0}",
+		"LOAD_FIFTEEN": "${load_fifteen:-0}",
+		"UPTIME_SECONDS": "${uptime_seconds:-0}",
+		"MEMORY_TOTAL_MB": "${memory_total}",
+		"MEMORY_USED_MB": "${memory_used}",
+		"MEMORY_AVAILABLE_MB": "${memory_available}",
+		"MEMORY_PERCENT": "${memory_percent}",
+		"DISK_TOTAL_KB": "${disk_total:-0}",
+		"DISK_USED_KB": "${disk_used:-0}",
+		"DISK_AVAILABLE_KB": "${disk_available:-0}",
+		"DISK_PERCENT": "${disk_percent}"
+	}
+}
+JSON
+}
+
+plain_list() {
+	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+		"${cpu_cores:-0}" "${load_one:-0}" "${load_five:-0}" "${load_fifteen:-0}" \
+		"${uptime_seconds:-0}" "$memory_total" "$memory_used" "${disk_used:-0}" "$disk_percent"
+}
+
+case $format in
+	json) json_list ;;
+	plain) plain_list ;;
+	shell) plain_list | column -t ;;
+	csv)
+		echo "CPU_CORES,LOAD_ONE,LOAD_FIVE,LOAD_FIFTEEN,UPTIME_SECONDS,MEMORY_TOTAL_MB,MEMORY_USED_MB,DISK_USED_KB,DISK_PERCENT"
+		plain_list | tr '\t' ','
+		;;
+esac
+
+exit 0

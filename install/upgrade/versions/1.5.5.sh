@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version 1.5.5
+# OrbixPanel upgrade script for target version 1.5.5
 
 #######################################################################################
 #######                      Place additional commands below.                   #######
@@ -83,7 +83,7 @@ if [ ! -f "/usr/share/keyrings/nginx-keyring.gpg" ]; then
 	fi
 	if [ -f "$apt/hestia.list" ]; then
 		rm $apt/hestia.list
-		echo "   [ * ] Hestia"
+		echo "   [ * ] OrbixPanel"
 		echo "deb [arch=$ARCH signed-by=/usr/share/keyrings/hestia-keyring.gpg] https://$RHOST/ $codename main" > $apt/hestia.list
 		gpg --no-default-keyring --keyring /usr/share/keyrings/hestia-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys A189E93654F0B0E5 > /dev/null 2>&1
 		apt-key del A189E93654F0B0E5 > /dev/null 2>&1

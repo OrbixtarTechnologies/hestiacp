@@ -1,48 +1,44 @@
-# Hestia CP Security policy
+# OrbixPanel security policy
 
-Welcome and thanks for taking interest in Hestia CP!
+Security reports help Orbixtar protect OrbixPanel users and the servers they operate. Do not disclose a suspected vulnerability in a public issue, discussion, or social-media post before a fix is available.
 
-We are mostly interested in reports by actual Hestia CP users but all high quality contributions are welcome.
+## Reporting a vulnerability
 
-If you believe you have discovered a vulnerability in Hestia Control Panel, please notify our development team by submitting a [vulnerability disclosure via GitHub](https://github.com/hestiacp/hestiacp/security/advisories/new).
+Submit a private report through [GitHub Security Advisories](https://github.com/OrbixtarTechnologies/orbixtar-panel/security/advisories/new).
 
-We ask you to include a detailed description of the vulnerability, a list of services involved (e.g. exim, dovecot) and the versions which you've tested, full steps to reproduce the vulnerability, and include your findings and expected results.
+Include:
 
-Please do not open any public issue on Github or any other social media before the report has been published and a fix has been released.
+- the affected OrbixPanel version, operating system, and enabled services;
+- a clear impact assessment and the permissions required to reproduce it;
+- complete reproduction steps or a minimal proof of concept;
+- relevant logs with credentials, hostnames, email addresses, and IP addresses removed; and
+- any temporary mitigation you have confirmed.
 
-With that, good luck hacking us ;)
+The Orbixtar team will validate the report, coordinate a remediation, and credit the reporter when requested and appropriate.
 
 ## Supported versions
 
-| Version | Supported          |
-| ------- | ------------------ |
-| Latest  | :white_check_mark: |
+| Version               | Security support |
+| --------------------- | ---------------- |
+| Latest release        | Supported        |
+| Development snapshots | Best effort      |
+| Older releases        | Upgrade required |
 
-## Qualifying Vulnerabilities
-
-### Vulnerabilities we really care about
+## In scope
 
 - Remote command execution
-- Code/SQL Injection
-- Authentication bypass
-- Privilege Escalation
-- Cross-site scripting (XSS)
-- Performing limited admin actions without authorization
-- CSRF
+- Code or SQL injection
+- Authentication or authorization bypass
+- Privilege escalation
+- Cross-site scripting and cross-site request forgery
+- Exposure of secrets or another account's data
+- Unsafe server-management actions reachable without the documented permission
 
-### Vulnerabilities we accept
+## Generally out of scope
 
-- Open redirects
-- Password brute-forcing that circumvents rate limiting
-
-## Non-Qualifying Vulnerabilities
-
-- Theoretical attacks without proof of exploitability
-- Attacks that are the result of a third party library should be reported to the library maintainers
-- Social engineering
-- Reflected file download
-- Physical attacks
-- Weak SSL/TLS/SSH algorithms or protocols
-- Attacks involving physical access to a user’s device, or involving a device or network that’s already seriously compromised (eg man-in-the-middle).
-- The user attacks themselves
-- anything in `/test/` folder
+- Reports without a reproducible security impact
+- Vulnerabilities exclusively in an upstream dependency that should be reported to its maintainer
+- Social engineering or attacks requiring physical access
+- Findings that require an already compromised administrator or server
+- Self-XSS, reflected file downloads, or open redirects without additional impact
+- Test-only fixtures under `test/`

@@ -1,0 +1,35 @@
+#!/bin/bash
+# info: delete an account directly owned by a reseller
+# options: RESELLER USER
+
+reseller=$1
+user=$2
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '2' "$#" 'RESELLER USER'
+is_user_format_valid "$reseller" 'reseller'
+is_format_valid 'user'
+is_reseller_valid "$reseller"
+is_reseller_user_valid "$reseller" "$user"
+check_hestia_demo_mode
+
+mkdir -p "$HESTIA/data/reseller-locks"
+exec 9> "$HESTIA/data/reseller-locks/$reseller.lock"
+if ! flock -n 9; then
+	check_result "$E_INUSE" "another account operation is already running for reseller $reseller"
+fi
+
+was_suspended=$(awk -F"'" '/^SUSPENDED=/ {print $2}' "$HESTIA/data/users/$user/user.conf")
+$BIN/v-delete-user "$user"
+check_result "$?" "account deletion failed"
+decrease_user_value "$reseller" '$U_USERS'
+if [ "$was_suspended" = 'yes' ]; then
+	decrease_user_value "$reseller" '$SUSPENDED_USERS'
+fi
+$BIN/v-log-action "$reseller" "Warning" "Users" "Managed account deleted (User: $user)."
+log_event "$OK" "$ARGUMENTS"
+
+exit

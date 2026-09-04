@@ -1,0 +1,74 @@
+#!/bin/bash
+# info: list cPanel backup archives available for migration
+# options: [FORMAT]
+#
+# example: v-list-cpanel-backups json
+
+format=${1-shell}
+
+# shellcheck source=/etc/hestiacp/hestia.conf
+source /etc/hestiacp/hestia.conf
+# shellcheck source=/usr/local/hestia/func/main.sh
+source $HESTIA/func/main.sh
+source_conf "$HESTIA/conf/hestia.conf"
+
+mapfile -d '' archives < <(
+	find "$BACKUP" -maxdepth 1 -type f \( -name '*.tar.gz' -o -name '*.tgz' \) -print0 2> /dev/null | sort -z
+)
+valid_archives=()
+for archive in "${archives[@]}"; do
+	name=$(basename -- "$archive")
+	if [ "${#name}" -le 180 ] && [[ "$name" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*\.(tar\.gz|tgz)$ ]]; then
+		valid_archives+=("$archive")
+	fi
+done
+archives=("${valid_archives[@]}")
+
+json_list() {
+	echo "{"
+	local index=0
+	local total=${#archives[@]}
+	local archive name size modified
+	for archive in "${archives[@]}"; do
+		name=$(basename -- "$archive")
+		size=$(stat -c '%s' -- "$archive")
+		modified=$(date -r "$archive" '+%FT%T%z')
+		((index++))
+		printf '    "%s": {\n        "SIZE": "%s",\n        "MODIFIED": "%s"\n    }' "$name" "$size" "$modified"
+		if [ "$index" -lt "$total" ]; then
+			echo ","
+		else
+			echo
+		fi
+	done
+	echo "}"
+}
+
+shell_list() {
+	echo "ARCHIVE SIZE MODIFIED"
+	echo "------- ---- --------"
+	local archive name
+	for archive in "${archives[@]}"; do
+		name=$(basename -- "$archive")
+		echo "$name $(du -h -- "$archive" | cut -f 1) $(date -r "$archive" '+%F %T')"
+	done
+}
+
+plain_list() {
+	local archive name
+	for archive in "${archives[@]}"; do
+		name=$(basename -- "$archive")
+		printf '%s\t%s\t%s\n' "$name" "$(stat -c '%s' -- "$archive")" "$(date -r "$archive" '+%FT%T%z')"
+	done
+}
+
+check_args '0' "$#" '[FORMAT]'
+is_format_valid 'format'
+
+case $format in
+	json) json_list ;;
+	plain) plain_list ;;
+	shell) shell_list | column -t ;;
+esac
+
+exit

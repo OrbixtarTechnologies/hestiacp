@@ -739,14 +739,14 @@ v-add-sys-cgroup
 
 **Options**:
 
-Add php dependencies to Hestia
+Add php dependencies to OrbixPanel
 options: [MODE]
 
 ## v-add-sys-filemanager
 
 [Source](https://github.com/hestiacp/hestiacp/blob/release/bin/v-add-sys-filemanager)
 
-add file manager functionality to Hestia Control Panel
+add file manager functionality to OrbixPanel
 
 **Options**: `[MODE]`
 
@@ -804,13 +804,13 @@ This function adds a new DNSBL server for Exim to check.
 
 [Source](https://github.com/hestiacp/hestiacp/blob/release/bin/v-add-sys-pma-restrict)
 
-restrict phpMyAdmin access to Hestia Single Sign-On only
+restrict phpMyAdmin access to OrbixPanel Single Sign-On only
 
 **Options**: `[MODE]`
 
 This function blocks direct/anonymous access to phpMyAdmin. Without a
-valid Hestia SSO token or an already established SSO session, requests
-are redirected to the Hestia login page instead of falling back to
+valid OrbixPanel SSO token or an already established SSO session, requests
+are redirected to the OrbixPanel login page instead of falling back to
 phpMyAdmin's own login form.
 
 ## v-add-sys-pma-sso
@@ -1994,7 +1994,7 @@ update web templates
 **Options**: `[RESTART]`
 
 This function for changing the release branch for the
-Hestia Control Panel. This allows the user to switch between
+OrbixPanel. This allows the user to switch between
 stable and pre-release builds which will automatically update
 based on the appropriate release schedule if auto-update is
 turned on.
@@ -3386,7 +3386,7 @@ This function disables cgroups
 
 [Source](https://github.com/hestiacp/hestiacp/blob/release/bin/v-delete-sys-filemanager)
 
-remove file manager functionality from Hestia Control Panel
+remove file manager functionality from OrbixPanel
 
 **Options**: `[MODE]`
 
@@ -3455,7 +3455,7 @@ undo phpMyAdmin access restriction, allow its normal login form again
 **Options**: `[MODE]`
 
 Reverts v-add-sys-pma-restrict: phpMyAdmin falls back to its own login
-form again when no valid Hestia SSO token or session is present.
+form again when no valid OrbixPanel SSO token or session is present.
 
 ## v-delete-sys-pma-sso
 
@@ -5034,7 +5034,7 @@ list system languages
 v-list-sys-languages json
 ```
 
-This function for obtaining the available languages for HestiaCP
+This function for obtaining the available languages for OrbixPanel
 Output is always in the ISO language code
 
 ## v-list-sys-mail-dnsbl
@@ -5749,13 +5749,13 @@ Install Quick Install Web App via CLI
 **Examples**:
 
 ```php
-v-quick-install-app install admin domain.com WordPress email="info@hestiacp" password="123456" username="admin" site_name="HestiaCP Demo" install_directory="/" language="nl_NL" php_version="8.2" database_create="true"
+v-quick-install-app install admin domain.com WordPress email="info@hestiacp" password="123456" username="admin" site_name="OrbixPanel Demo" install_directory="/" language="nl_NL" php_version="8.2" database_create="true"
  example: v-quick-install-app app
  example: v-quick-install-app options admin domain.com WordPress
 ```
 
-- The v-quick-install-app install command is used to automate the installation of web applications on a server managed by Hestia Control Panel.
-- The v-quick-install-app app command is used to retrieve a list of web applications that can be quickly installed through the v-quick-install-app install command in the Hestia Control Panel. This command provides a convenient overview of supported applications and their versions, allowing users to choose which application they would like to deploy on their server. The names of the applications are case sensitive.
+- The v-quick-install-app install command is used to automate the installation of web applications on a server managed by OrbixPanel.
+- The v-quick-install-app app command is used to retrieve a list of web applications that can be quickly installed through the v-quick-install-app install command in the OrbixPanel. This command provides a convenient overview of supported applications and their versions, allowing users to choose which application they would like to deploy on their server. The names of the applications are case sensitive.
 - v-quick-install-app options admin domain.com WordPress list all the options available for the specified web application. This command provides a list of all the required and optional fields that need to be filled in when installing the application. The command also provides the default values for each field, if available.
 
 ## v-rebuild-all
@@ -6455,7 +6455,7 @@ search for available commands
 v-search-command web
 ```
 
-This function searches for available Hestia Control Panel commands
+This function searches for available OrbixPanel commands
 and returns results based on the specified criteria.
 Originally developed for VestaCP by Federico Krum
 <https://github.com/FastDigitalOceanDroplets/VestaCP/blob/master/files/v-search-command>
@@ -7188,7 +7188,7 @@ update dns templates
 
 **Options**: `[RESTART]`
 
-This function for obtaining updated dns templates from Hestia package.
+This function for obtaining updated dns templates from OrbixPanel package.
 
 ## v-update-firewall
 
@@ -7224,7 +7224,7 @@ update host certificate for hestia
 v-update-host-certificate admin example.com
 ```
 
-This function updates the SSL certificate used for Hestia Control Panel.
+This function updates the SSL certificate used for OrbixPanel.
 
 ## v-update-letsencrypt-ssl
 
@@ -7295,7 +7295,7 @@ update mail templates
 
 **Options**: `[RESTART]` `[SKIP]`
 
-This function for obtaining updated webmail templates from Hestia package.
+This function for obtaining updated webmail templates from OrbixPanel package.
 
 ## v-update-sys-defaults
 
@@ -7376,7 +7376,7 @@ v-update-sys-ip
 # Intended for internal usage
 ```
 
-This function scans configured IP in the system and register them with Hestia
+This function scans configured IP in the system and register them with OrbixPanel
 internal database. This call is intended for use on vps servers, where IP is
 set by hypervisor.
 
@@ -7760,7 +7760,7 @@ update web templates
 
 **Options**: `[RESTART]` `[SKIP]`
 
-This function for obtaining updated web (Nginx/Apache2/PHP) templates from the Hestia package.
+This function for obtaining updated web (Nginx/Apache2/PHP) templates from the OrbixPanel package.
 
 ## v-update-white-label-logo
 
@@ -7770,4 +7770,4 @@ update white label logo's
 
 **Options**: `[DOWNLOAD]`
 
-Replace Hestia logos with User created logo's
+Replace OrbixPanel logos with User created logo's

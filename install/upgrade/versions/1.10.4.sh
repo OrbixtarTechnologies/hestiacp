@@ -1,24 +1,19 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version 1.10.4
+# Add least-privilege reseller ownership metadata to existing user records.
+for user_conf in "$HESTIA"/data/users/*/user.conf; do
+	[ -f "$user_conf" ] || continue
+	if ! grep -q "^OWNER=" "$user_conf"; then
+		sed -i "/^ROLE=/a OWNER='$ROOT_USER'" "$user_conf"
+	fi
+	if ! grep -q "^RESELLER=" "$user_conf"; then
+		sed -i "/^OWNER=/a RESELLER='no'\nRESELLER_MAX_USERS='0'\nRESELLER_PACKAGES=''" "$user_conf"
+	fi
+done
 
-#######################################################################################
-#######                      Place additional commands below.                   #######
-#######################################################################################
-####### upgrade_config_set_value only accepts true or false.                    #######
-#######                                                                         #######
-####### Pass through information to the end user in case of a issue or problem  #######
-#######                                                                         #######
-####### Use add_upgrade_message "My message here" to include a message          #######
-####### in the upgrade notification email. Example:                             #######
-#######                                                                         #######
-####### add_upgrade_message "My message here"                                   #######
-#######                                                                         #######
-####### You can use \n within the string to create new lines.                   #######
-#######################################################################################
+"$HESTIA/bin/v-update-user-counters"
 
-upgrade_config_set_value 'UPGRADE_UPDATE_WEB_TEMPLATES' 'false'
-upgrade_config_set_value 'UPGRADE_UPDATE_DNS_TEMPLATES' 'false'
-upgrade_config_set_value 'UPGRADE_UPDATE_FILEMANAGER_CONFIG' 'false'
-upgrade_config_set_value 'UPGRADE_UPDATE_MAIL_TEMPLATES' 'false'
-upgrade_config_set_value 'UPGRADE_REBUILD_USERS' 'false'
+install -d -m 0750 "$HESTIA/data/api"
+install -m 0640 "$HESTIA/install/common/api/uapi-read" "$HESTIA/data/api/uapi-read"
+install -m 0640 "$HESTIA/install/common/api/fleet-read" "$HESTIA/data/api/fleet-read"
+install -m 0640 "$HESTIA/install/common/api/whm-read" "$HESTIA/data/api/whm-read"

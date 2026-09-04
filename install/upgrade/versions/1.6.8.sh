@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version unreleased
+# OrbixPanel upgrade script for target version unreleased
 
 #######################################################################################
 #######                      Place additional commands below.                   #######

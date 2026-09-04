@@ -1,0 +1,84 @@
+#!/bin/bash
+# info: list cPanel account migration jobs
+# options: [FORMAT]
+#
+# example: v-list-cpanel-imports json
+
+format=${1-shell}
+
+# shellcheck source=/etc/hestiacp/hestia.conf
+source /etc/hestiacp/hestia.conf
+# shellcheck source=/usr/local/hestia/func/main.sh
+source $HESTIA/func/main.sh
+source_conf "$HESTIA/conf/hestia.conf"
+
+state_dir="/var/log/orbixpanel/migrations"
+mkdir -p "$state_dir"
+chmod 750 "$state_dir"
+
+mapfile -t jobs < <(find "$state_dir" -maxdepth 1 -type f -name '*.meta' -printf '%f\n' | sed 's/\.meta$//' | sort -r)
+
+read_job() {
+	local job_id=$1
+	local meta_file="$state_dir/$job_id.meta"
+	JOB_ID=$(sed -n 's/^JOB_ID=//p' "$meta_file")
+	BACKUP=$(sed -n 's/^BACKUP=//p' "$meta_file")
+	RESTORE_MX=$(sed -n 's/^RESTORE_MX=//p' "$meta_file")
+	STARTED=$(sed -n 's/^STARTED=//p' "$meta_file")
+	TYPE=$(sed -n 's/^TYPE=//p' "$meta_file")
+	SOURCE=$(sed -n 's/^SOURCE=//p' "$meta_file")
+	TYPE=${TYPE:-local}
+	STATUS=$(head -n 1 "$state_dir/$job_id.status" 2> /dev/null || echo unknown)
+	PID=$(head -n 1 "$state_dir/$job_id.pid" 2> /dev/null || true)
+	if [[ "$STATUS" =~ ^(running|queued|preflight|transferring|validating|queueing_import)$ ]] && { [ -z "$PID" ] || ! kill -0 "$PID" 2> /dev/null; }; then
+		STATUS="interrupted"
+		printf '%s\n' "$STATUS" > "$state_dir/$job_id.status"
+	fi
+}
+
+json_list() {
+	echo "{"
+	local index=0
+	local total=${#jobs[@]}
+	local job
+	for job in "${jobs[@]}"; do
+		read_job "$job"
+		((index++))
+		printf '    "%s": {\n        "BACKUP": "%s",\n        "RESTORE_MX": "%s",\n        "STATUS": "%s",\n        "STARTED": "%s",\n        "PID": "%s",\n        "TYPE": "%s",\n        "SOURCE": "%s"\n    }' "$JOB_ID" "$BACKUP" "$RESTORE_MX" "$STATUS" "$STARTED" "$PID" "$TYPE" "$SOURCE"
+		if [ "$index" -lt "$total" ]; then
+			echo ","
+		else
+			echo
+		fi
+	done
+	echo "}"
+}
+
+shell_list() {
+	echo "JOB BACKUP STATUS STARTED"
+	echo "--- ------ ------ -------"
+	local job
+	for job in "${jobs[@]}"; do
+		read_job "$job"
+		echo "$JOB_ID $BACKUP $STATUS $STARTED"
+	done
+}
+
+plain_list() {
+	local job
+	for job in "${jobs[@]}"; do
+		read_job "$job"
+		printf '%s\t%s\t%s\t%s\t%s\n' "$JOB_ID" "$BACKUP" "$STATUS" "$STARTED" "$RESTORE_MX"
+	done
+}
+
+check_args '0' "$#" '[FORMAT]'
+is_format_valid 'format'
+
+case $format in
+	json) json_list ;;
+	plain) plain_list ;;
+	shell) shell_list | column -t ;;
+esac
+
+exit

@@ -1,0 +1,98 @@
+#!/bin/bash
+# info: check public DNS records used for mail deliverability
+# options: USER DOMAIN [FORMAT]
+#
+# example: v-check-mail-domain-dns user example.com json
+
+user=$1
+domain=$2
+format=${3-shell}
+
+# shellcheck source=/etc/hestiacp/hestia.conf
+source /etc/hestiacp/hestia.conf
+# shellcheck source=/usr/local/hestia/func/main.sh
+source $HESTIA/func/main.sh
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '2' "$#" 'USER DOMAIN [FORMAT]'
+is_format_valid 'user' 'domain' 'format'
+is_object_valid 'user' 'USER' "$user"
+is_object_valid 'mail' 'DOMAIN' "$domain"
+
+checked_at=$(date '+%FT%T%z')
+mx_status="missing"
+spf_status="missing"
+dkim_status="missing"
+dmarc_status="missing"
+resolver_status="available"
+
+mail_config=$(grep "DOMAIN='$domain'" "$USER_DATA/mail.conf")
+parse_object_kv_list "$mail_config"
+
+dns_query() {
+	timeout 12 dig +time=4 +tries=2 +short "$2." "$1" 2> /dev/null
+}
+
+if ! command -v dig > /dev/null 2>&1; then
+	resolver_status="unavailable"
+	mx_status="unavailable"
+	spf_status="unavailable"
+	dkim_status="unavailable"
+	dmarc_status="unavailable"
+else
+	mx_records=$(dns_query MX "$domain")
+	spf_records=$(dns_query TXT "$domain")
+	dmarc_records=$(dns_query TXT "_dmarc.$domain")
+
+	if [ -n "$mx_records" ]; then
+		mx_status="pass"
+	fi
+	if echo "$spf_records" | grep -qi 'v=spf1'; then
+		spf_status="pass"
+	fi
+	if echo "$dmarc_records" | grep -qi 'v=DMARC1'; then
+		dmarc_status="pass"
+	fi
+
+	if [ "${DKIM:-no}" != "yes" ]; then
+		dkim_status="disabled"
+	else
+		dkim_records=$(dns_query TXT "mail._domainkey.$domain")
+		if echo "$dkim_records" | grep -qi 'v=DKIM1'; then
+			dkim_status="pass"
+		fi
+	fi
+fi
+
+json_list() {
+	cat << EOF
+{
+    "$domain": {
+        "MX": "$mx_status",
+        "SPF": "$spf_status",
+        "DKIM": "$dkim_status",
+        "DMARC": "$dmarc_status",
+        "RESOLVER": "$resolver_status",
+        "CHECKED": "$checked_at"
+    }
+}
+EOF
+}
+
+plain_list() {
+	printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$domain" "$mx_status" "$spf_status" "$dkim_status" "$dmarc_status" "$resolver_status" "$checked_at"
+}
+
+shell_list() {
+	echo "DOMAIN MX SPF DKIM DMARC RESOLVER CHECKED"
+	echo "------ -- --- ---- ----- -------- -------"
+	plain_list
+}
+
+case $format in
+	json) json_list ;;
+	plain) plain_list ;;
+	shell) shell_list | column -t ;;
+esac
+
+exit

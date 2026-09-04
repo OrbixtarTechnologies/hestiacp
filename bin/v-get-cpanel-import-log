@@ -1,0 +1,26 @@
+#!/bin/bash
+# info: show the log for a cPanel account migration
+# options: JOB
+#
+# example: v-get-cpanel-import-log 20260904123000-1234-5678
+
+job=$1
+
+# shellcheck source=/etc/hestiacp/hestia.conf
+source /etc/hestiacp/hestia.conf
+# shellcheck source=/usr/local/hestia/func/main.sh
+source $HESTIA/func/main.sh
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '1' "$#" 'JOB'
+if [[ ! "$job" =~ ^[0-9]{14}-[0-9]+-[0-9]+$ ]]; then
+	check_result "$E_INVALID" "Invalid migration job ID"
+fi
+
+log_file="/var/log/orbixpanel/migrations/$job.log"
+if [ ! -f "$log_file" ] || [ -L "$log_file" ]; then
+	check_result "$E_NOTEXIST" "Migration log does not exist"
+fi
+
+tail -n 300 -- "$log_file"
+exit

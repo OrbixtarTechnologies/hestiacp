@@ -117,7 +117,7 @@ if [ -z "$sys_ip_check" ]; then
 		echo -e "$sys_ip" >> "$netplan_file"
 		unset IFS
 	else
-		sys_ip="\n# Added by Hestia Control Panel"
+		sys_ip="\n# Added by OrbixPanel"
 		sys_ip="$sys_ip\nauto $iface"
 		sys_ip="$sys_ip\niface $iface inet static"
 		sys_ip="$sys_ip\naddress $ip"

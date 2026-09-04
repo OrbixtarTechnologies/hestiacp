@@ -1,0 +1,76 @@
+#!/bin/bash
+# info: enable or disable least-privilege reseller account delegation
+# options: USER STATUS [MAX_USERS] [PACKAGES]
+#
+# example: v-change-user-reseller agency yes 25 default,business
+
+user=$1
+status=$2
+max_users=${3-0}
+allowed_packages=$4
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '2' "$#" 'USER STATUS [MAX_USERS] [PACKAGES]'
+is_format_valid 'user'
+is_boolean_format_valid "$status" 'status'
+is_object_valid 'user' 'USER' "$user"
+is_object_unsuspended 'user' 'USER' "$user"
+
+if [ "$user" = "$ROOT_USER" ]; then
+	check_result "$E_FORBIDEN" "the root administrator cannot be converted to a reseller"
+fi
+
+user_conf="$HESTIA/data/users/$user/user.conf"
+user_role=$(awk -F"'" '/^ROLE=/ {print $2}' "$user_conf")
+user_owner=$(awk -F"'" '/^OWNER=/ {print $2}' "$user_conf")
+owned_count=$(grep -l "^OWNER='$user'$" "$HESTIA"/data/users/*/user.conf 2> /dev/null | wc -l)
+
+if [ "$user_role" != 'user' ] || { [ -n "$user_owner" ] && [ "$user_owner" != "$ROOT_USER" ]; }; then
+	check_result "$E_FORBIDEN" "only root-owned user accounts can become resellers"
+fi
+
+if [ "$status" = 'yes' ]; then
+	if ! [[ "$max_users" =~ ^[1-9][0-9]{0,3}$ ]]; then
+		check_result "$E_INVALID" "maximum accounts must be between 1 and 9999"
+	fi
+	if [ "$owned_count" -gt "$max_users" ]; then
+		check_result "$E_LIMIT" "maximum accounts is below current reseller usage"
+	fi
+	if [ -z "$allowed_packages" ]; then
+		check_result "$E_INVALID" "at least one hosting package is required"
+	fi
+	IFS=',' read -ra package_list <<< "$allowed_packages"
+	clean_packages=''
+	separator=''
+	for package in "${package_list[@]}"; do
+		is_object_format_valid "$package" 'package'
+		if [ ! -f "$HESTIA/data/packages/$package.pkg" ]; then
+			check_result "$E_NOTEXIST" "package $package doesn't exist"
+		fi
+		if [[ ",$clean_packages," != *",$package,"* ]]; then
+			clean_packages+="$separator$package"
+			separator=','
+		fi
+	done
+	allowed_packages="$clean_packages"
+else
+	if [ "$owned_count" -gt 0 ]; then
+		check_result "$E_INUSE" "reseller still owns $owned_count account(s)"
+	fi
+	max_users=0
+	allowed_packages=''
+fi
+
+check_hestia_demo_mode
+update_user_value "$user" '$OWNER' "$ROOT_USER"
+update_user_value "$user" '$RESELLER' "$status"
+update_user_value "$user" '$RESELLER_MAX_USERS' "$max_users"
+update_user_value "$user" '$RESELLER_PACKAGES' "$allowed_packages"
+$BIN/v-update-user-counters "$user"
+$BIN/v-log-action "system" "Warning" "Users" "Reseller delegation changed (User: $user, Status: $status, Limit: $max_users, Packages: $allowed_packages)."
+log_event "$OK" "$ARGUMENTS"
+
+exit

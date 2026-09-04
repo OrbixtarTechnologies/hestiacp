@@ -13,10 +13,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
-        if: github.repository == 'hestiacp/hestiacp'
+        if: github.repository == 'OrbixtarTechnologies/orbixtar-panel'
       - name: crowdin action
         uses: crowdin/github-action@v3
-        if: github.repository == 'hestiacp/hestiacp'
+        if: github.repository == 'OrbixtarTechnologies/orbixtar-panel'
         with:
           upload_sources: true
           upload_translations: false

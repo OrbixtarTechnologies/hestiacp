@@ -1,37 +1,12 @@
 ---
 layout: page
-
-title: The Team
+title: Project stewardship
 ---
 
-<script setup>
-  import { VPTeamPage, VPTeamPageTitle, VPTeamPageSection, VPTeamMembers } from "vitepress/theme";
-  import { projectManagers, teamMembers } from "./_data/team";
-</script>
+OrbixPanel is maintained by Orbixtar Technologies with contributions from the open-source community.
 
-<VPTeamPage>
-  <VPTeamPageTitle>
-    <template #title>The Team</template>
-    <template #lead>
-      The development of Hestia is guided by an international team, some of whom have chosen to be featured below.
-    </template>
-  </VPTeamPageTitle>
-  <VPTeamPageSection>
-    <template #title>Project Managers</template>
-    <template #members>
-      <VPTeamMembers :members="projectManagers" />
-    </template>
-  </VPTeamPageSection>
-  <VPTeamPageSection>
-    <template #title>Team Members</template>
-    <template #members>
-      <VPTeamMembers :members="teamMembers" />
-    </template>
-  </VPTeamPageSection>
-  <!-- <VPTeamPageSection>
-    <template #title>Contributors ❤️</template>
-    <template #members>
-      <VPTeamMembers size="small" :members="featuredContributors" />
-    </template>
-  </VPTeamPageSection> -->
-</VPTeamPage>
+- [Review project activity](https://github.com/OrbixtarTechnologies/orbixtar-panel/pulse)
+- [Meet repository contributors](https://github.com/OrbixtarTechnologies/orbixtar-panel/graphs/contributors)
+- [Propose an improvement](https://github.com/OrbixtarTechnologies/orbixtar-panel/issues)
+
+The project retains the copyright notices and GPL obligations that apply to code inherited from Hestia Control Panel and Vesta Control Panel. Upstream contributors are acknowledged through the repository history and license records.

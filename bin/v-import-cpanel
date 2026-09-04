@@ -35,36 +35,55 @@ if [ ! -e /usr/bin/rsync ] || [ ! -e /usr/bin/file ]; then
 	exit 3
 fi
 
-if [ -f "$1" ]; then
-	cpanel_backup="$1"
-fi
-if [ -n "$2" ]; then
-	mx="$2"
-fi
-if [ -z "$BACKUP_TEMP" ]; then
-	BACKUP_TEMP=$BACKUP
-else
-	echo "File does not exist"
+if [ ! -f "$1" ] || [ -L "$1" ]; then
+	echo "File does not exist or is not a regular backup archive"
 	exit 1
+fi
+cpanel_backup=$(realpath -e -- "$1")
+mx=${2-no}
+if [[ "$mx" != "yes" && "$mx" != "no" ]]; then
+	echo "RESTORE_MX must be yes or no"
+	exit 2
+fi
+BACKUP_TEMP=${BACKUP_TEMP:-$BACKUP}
+if [ ! -d "$BACKUP_TEMP" ]; then
+	echo "Backup temporary directory does not exist: $BACKUP_TEMP"
+	exit 1
+fi
+
+archive_index=$(mktemp)
+trap 'rm -f "$archive_index"' EXIT
+if ! tar -tzf "$cpanel_backup" > "$archive_index"; then
+	echo "Backup archive could not be inspected"
+	exit 3
+fi
+if grep -Eq '(^/|(^|/)\.\.(/|$)|[[:cntrl:]])' "$archive_index"; then
+	echo "Backup contains an unsafe archive path"
+	exit 3
 fi
 
 # Creating temporary directory
 tmpdir=$(mktemp -p "$BACKUP_TEMP" -d)
+cleanup_import() {
+	rm -rf -- "$tmpdir"
+	rm -f -- "$archive_index"
+}
+trap cleanup_import EXIT
 
 tput setaf 2
 echo "Checking provided file..."
 tput sgr0
 if ! file "$cpanel_backup" | grep -q -c "gzip compressed data,"; then
-	echo "Error 3 not-gzip - no stantard cpanel backup provided of file not installed ( Try yum install file, or apt-get install file )"
+	echo "Error: The selected file is not a valid gzip-compressed cPanel backup"
 	rm -rf "$tmpdir"
 	exit 3
 fi
 
 tput setaf 2
-echo "OK - Gziped File"
+echo "OK - gzip archive detected"
 tput sgr0
 echo "Extracting backup..."
-if tar xzf "$cpanel_backup" -C "$tmpdir"; then
+if tar --extract --gzip --file "$cpanel_backup" --directory "$tmpdir" --no-same-owner --no-same-permissions; then
 	tput setaf 2
 	echo "Backup extracted without errors..."
 	tput sgr0
@@ -75,22 +94,41 @@ else
 	exit 1
 fi
 
-cd $tmpdir/*
+mapfile -t import_roots < <(find "$tmpdir" -mindepth 1 -maxdepth 1 -type d)
+if [ "${#import_roots[@]}" -ne 1 ]; then
+	echo "Backup must contain exactly one cPanel account directory"
+	exit 3
+fi
+cd "${import_roots[0]}" || exit 3
 
 main_dir=$(pwd)
 echo "Access tmp directory $main_dir"
+for required_file in meta/dbprefix userdata/main; do
+	if [ ! -f "$required_file" ] || [ -L "$required_file" ]; then
+		echo "Required cPanel metadata is missing or unsafe: $required_file"
+		exit 3
+	fi
+done
 dbprefix=$(cat meta/dbprefix)
 if [ $dbprefix == 1 ]; then
 	echo "Error 255 - I dont like your prefix, I dont want do this job"
 	exit 255
 fi
 main_domain1=$(grep main_domain userdata/main | cut -d " " -f2)
-new_user=$(grep "^user:" userdata/${main_domain1} | cut -d " " -f2)
+is_domain_format_valid "$main_domain1" "main domain"
+if [ ! -f "userdata/$main_domain1" ] || [ -L "userdata/$main_domain1" ]; then
+	echo "Main domain metadata is missing or unsafe"
+	exit 3
+fi
+new_user=$(grep "^user:" "userdata/$main_domain1" | cut -d " " -f2)
+FROM_V_ADD_USER=true
+is_user_format_valid "$new_user" "cPanel username"
+FROM_V_ADD_USER=false
 echo "Get User: $new_user"
 check_sysuser=$(cut -f 1 -d : /etc/passwd | grep "^$new_user$")
 if [ -n "$check_sysuser" ] || [ -e "$HESTIA/data/users/$new_user" ]; then
 	check_result "$E_EXISTS" "user $new_user exists"
-	echo "User allready exists"
+	echo "User already exists"
 	exit 2
 fi
 
@@ -100,7 +138,7 @@ if /usr/local/hestia/bin/v-list-user-packages | grep -qw "$cpanel_package_name";
 	hestia_package="$cpanel_package_name"
 	echo "Package $hestia_package will be used for the user."
 else
-	hestia_package="default" # Replace "default" with your default Hestia package name
+	hestia_package="default" # Replace "default" with your default OrbixPanel package name
 	echo "Default package $hestia_package will be used for the user."
 fi
 
@@ -140,27 +178,27 @@ db_list=$(grep -m 1 Database: mysql/*.create | awk '{ print  $5 }')
 sed -i "s/utf8mb4_0900_ai_ci/utf8mb4_unicode_ci/g" mysql/*
 mysql -e "SHOW DATABASES" > server_dbs
 for db in $db_list; do
-	grep -w $db server_dbs
+	is_database_format_valid "$db" "database"
+	grep -w -- "$db" server_dbs
 	if [ $? == "1" ]; then
 		echo " Create and restore ${db} "
-		mysql < mysql/${db}.create
-		mysql ${db} < mysql/${db}.sql
+		mysql < "mysql/${db}.create"
+		mysql "$db" < "mysql/${db}.sql"
 	else
-		echo "Error: Cant restore database $db alredy exists in mysql server"
+		echo "Error: Cannot restore database $db because it already exists on the server"
 	fi
 done
 
-time=$(echo "$time_n_date" | cut -f 1 -d \ )
-date=$(echo "$time_n_date" | cut -f 2 -d \ )
+new_timestamp
 
 cat uni_u_db | while read db userdb; do
 	grep -w $userdb user_password_db | while read user end_user_pass; do
 		# default cpanel user has all database privileges
 		# if you use default user in your config files to connect with database
 		# you will need remove && [ "$userdb" != "$sk_cp_user" ] to restore main user, but
-		# this will cause database duplication in db.conf and will interfer with hestiacp backups
-		if [ "$userdb" == "$user" ] && [ "$userdb" != "$new_user" ]; then
-			echo "DB='$db' DBUSER='$userdb' MD5='$end_user_pass' HOST='localhost' TYPE='mysql' CHARSET='UTF8' U_DISK='0' SUSPENDED='no' TIME='$time' DATE='$data'" >> /usr/local/hestia/data/users/$new_user/db.conf
+			# this will cause database duplication in db.conf and interfere with OrbixPanel backups
+			if [ "$userdb" == "$user" ] && [ "$userdb" != "$new_user" ]; then
+				echo "DB='$db' DBUSER='$userdb' MD5='$end_user_pass' HOST='localhost' TYPE='mysql' CHARSET='UTF8' U_DISK='0' SUSPENDED='no' TIME='$time' DATE='$date'" >> "/usr/local/hestia/data/users/$new_user/db.conf"
 		fi
 	done
 done
@@ -178,49 +216,57 @@ echo "Converting addons domains, subdomains and some other fun"
 cp sds hst_sds
 cp sds2 hst_sds2
 sed -i 's/_/./g' hst_sds
-cat addons | while read addon_domain addon_sub; do
+while read -r addon_domain addon_sub; do
+	is_domain_format_valid "$addon_domain" "addon domain"
+	is_domain_format_valid "$addon_sub" "addon source domain"
 	echo "Converting default subdomain: $addon_sub in domain: $addon_domain"
 	sed -i -e "s/$addon_sub/$addon_domain/g" hst_sds
 	sed -i -e "s/$addon_sub/$addon_domain/g" hst_sds2
-	mv userdata/$addon_sub userdata/${addon_domain}
-	mv apache_tls/$addon_sub apache_tls/${addon_domain}
-done
+	mv "userdata/$addon_sub" "userdata/$addon_domain"
+	if [ -e "apache_tls/$addon_sub" ]; then
+		mv "apache_tls/$addon_sub" "apache_tls/$addon_domain"
+	fi
+done < addons
 sed -i 's/public_html/public@html/g; s/_/./g; s/public@html/public_html/g; s/=/ /g' hst_sds2
 
 tput setaf 2
 echo "Start restoring domains"
 tput sgr0
 function get_domain_path() {
-	while read cp_domain path; do
+	while read -r cp_domain path; do
+		is_domain_format_valid "$cp_domain" "web domain"
+		if [[ "$path" == /* || "$path" =~ (^|/)\.\.(/|$) ]]; then
+			check_result "$E_FORBIDEN" "Unsafe document-root path in cPanel backup"
+		fi
 		echo "Import $cp_domain"
-		if [ -e userdata/$cp_domain ]; then
-			echo $cp_domain
+		if [ -e "userdata/$cp_domain" ]; then
+			echo "$cp_domain"
 			$BIN/v-add-domain "$new_user" "$cp_domain"
 			if [ $? -ne 0 ]; then
-				check_result "1" "Unable to create domain it allready exists"
+				check_result "1" "Unable to create domain because it already exists"
 			fi
-			rm -f /home/$new_user/web/$cp_domain/public_html/index.html
-			rm -f /home/$new_user/web/$cp_domain/public_html/robots.txt
+			rm -f "/home/$new_user/web/$cp_domain/public_html/index.html"
+			rm -f "/home/$new_user/web/$cp_domain/public_html/robots.txt"
 			sync_count=0
-			rsync -av homedir/$path/ /home/$new_user/web/$cp_domain/public_html 2>&1 \
-				| while read file_dm; do
+			rsync -av "homedir/$path/" "/home/$new_user/web/$cp_domain/public_html" 2>&1 \
+				| while read -r file_dm; do
 					sync_count=$(($sync_count + 1))
 					echo -en "-- $sync_count restored files\r"
 				done
-			chown $new_user:$new_user -R /home/$new_user/web/$cp_domain/public_html
-			chown $new_user:www-data /home/$new_user/web/$cp_domain/public_html
-			chmod 751 /home/$new_user/web/$cp_domain/public_html
+			chown "$new_user:$new_user" -R "/home/$new_user/web/$cp_domain/public_html"
+			chown "$new_user:www-data" "/home/$new_user/web/$cp_domain/public_html"
+			chmod 751 "/home/$new_user/web/$cp_domain/public_html"
 			echo "$cp_domain" >> exclude_path
 		fi
 	done
 }
 get_domain_path < hst_sds2
 
-echo $main_domain1
-$BIN/v-add-domain $new_user $main_domain1
+echo "$main_domain1"
+$BIN/v-add-domain "$new_user" "$main_domain1"
 
 if [ $? -ne 0 ]; then
-	check_result "1" "Unable to create domain it allready exists"
+	check_result "1" "Unable to create domain because it already exists"
 fi
 
 # need it for restore main domain
@@ -260,7 +306,7 @@ if [ -n "$CPANEL_PHP_VERSION" ]; then
 		fi
 	else
 		tput setaf 1
-		echo "PHP version $HESTIA_PHP_VERSION is not installed on HestiaCP."
+		echo "PHP version $HESTIA_PHP_VERSION is not installed on OrbixPanel."
 		echo "Please install and set it to avoid errors in website."
 		echo "The restoration will continue but the website may not work as expected"
 		tput sgr0
@@ -275,11 +321,13 @@ fi
 
 # Parked domains
 if [ -s pds ]; then
-	cat pds | while read parked; do
-		echo "Procesing parked domain: $parked"
-		parkedfor=$(cat userdata/cache.json | jq --arg domain "$parked" '.[$domain][3]' | sed 's/"//g')
-		$BIN/v-add-web-domain-alias $new_user $parkedfor $parked
-	done
+	while read -r parked; do
+		is_domain_format_valid "$parked" "parked domain"
+		echo "Processing parked domain: $parked"
+		parkedfor=$(jq -r --arg domain "$parked" '.[$domain][3]' userdata/cache.json)
+		is_domain_format_valid "$parkedfor" "parent domain"
+		$BIN/v-add-web-domain-alias "$new_user" "$parkedfor" "$parked"
+	done < pds
 else
 
 	echo "No parked domains found"
@@ -291,8 +339,10 @@ tput setaf 2
 echo "Copy SSL files"
 tput sgr0
 for ssl_domain in apache_tls/*; do
-	domain=$(echo $ssl_domain | awk -F '/' '{ print $2 }')
-	mkdir -p apache_tls/ssl/$domain
+	[ -f "$ssl_domain" ] || continue
+	domain=$(basename -- "$ssl_domain")
+	is_domain_format_valid "$domain" "SSL domain"
+	mkdir -p "apache_tls/ssl/$domain"
 	awk -v RS="-----BEGIN CERTIFICATE-----" -v ssl_domain="$domain" '
         NR==1 {
             cert_file = "apache_tls/ssl/" ssl_domain "/" ssl_domain ".key";
@@ -307,8 +357,8 @@ for ssl_domain in apache_tls/*; do
             block_count++;
             cert_file = "apache_tls/ssl/" ssl_domain "/" ssl_domain ".ca";
             print "-----BEGIN CERTIFICATE-----" $0 > cert_file;
-        } ' $ssl_domain
-	$BIN/v-add-web-domain-ssl $new_user $domain apache_tls/ssl/${domain}/
+	        } ' "$ssl_domain"
+	$BIN/v-add-web-domain-ssl "$new_user" "$domain" "apache_tls/ssl/${domain}/"
 done
 
 ##################
@@ -322,13 +372,14 @@ cd homedir/mail
 for folder in *; do
 	if [ -d "$folder" ]; then
 		if [[ "$folder" != "cur" && "$folder" != "new" && "$folder" != "tmp" ]]; then
+			is_domain_format_valid "$folder" "mail domain"
 			echo "Domain: $folder"
 			# This is needed as parked domains have emails but not added
-			if ! $BIN/v-list-mail-domains $new_user plain | awk '{ print $1 }' | grep "^${folder}$"; then
+			if ! $BIN/v-list-mail-domains "$new_user" plain | awk '{ print $1 }' | grep -Fx -- "$folder"; then
 				tput setaf 3
 				echo "Found Parked domain $folder  not added in hestia mail, adding..."
 				tput sgr0
-				$BIN/v-add-mail-domain $new_user $folder
+				$BIN/v-add-mail-domain "$new_user" "$folder"
 			fi
 			cd $folder
 
@@ -340,16 +391,18 @@ for folder in *; do
 			fi
 
 			for mail_account in *; do
+				[ -d "$mail_account" ] || continue
+				is_localpart_format_valid "$mail_account" "mail account" 64
 				echo "Import mail account: $mail_account@$folder"
 				# Doesn't really matter but we don't know the unhashed one
 				tmp_pass=$(generate_password)
-				$BIN/v-add-mail-account $new_user $folder $mail_account $tmp_pass
-				mv $mail_account /home/$new_user/mail/$folder/
-				chown -R $new_user:mail /home/$new_user/mail/$folder/
+				$BIN/v-add-mail-account "$new_user" "$folder" "$mail_account" "$tmp_pass"
+				mv "$mail_account" "/home/$new_user/mail/$folder/"
+				chown -R "$new_user:mail" "/home/$new_user/mail/$folder/"
 
 				# Decompress gzipped emails
 				decompressed_count=0
-				for mail_file in $(find /home/$new_user/mail/$folder -type f); do
+				while IFS= read -r -d '' mail_file; do
 					if file "$mail_file" | grep -q "gzip compressed"; then
 						original_time=$(stat -c %y "$mail_file" 2> /dev/null)
 						gunzip -c "$mail_file" > "${mail_file}.decompressed" && mv "${mail_file}.decompressed" "$mail_file"
@@ -358,16 +411,16 @@ for folder in *; do
 						fi
 						let decompressed_count++
 					fi
-				done
+				done < <(find "/home/$new_user/mail/$folder" -type f -print0)
 
 				echo "$decompressed_count emails decompressed for $mail_account@$folder"
 
-				find /home/$new_user/mail/$folder -type f -name 'dovecot*' -delete
+				find "/home/$new_user/mail/$folder" -type f -name 'dovecot*' -delete
 
 				# Extract and update password from the shadow file
 				password_file="../../etc/${folder}/shadow"
 				if [ -f "$password_file" ]; then
-					pass_line=$(grep "^$mail_account:" $password_file)
+					pass_line=$(grep "^$mail_account:" "$password_file")
 					if [ $? -eq 0 ]; then
 						# Extract the hashed password from the shadow file
 						pass=$(echo "$pass_line" | awk -F ":" '{print $2}')
@@ -375,8 +428,8 @@ for folder in *; do
 						newline2="ACCOUNT='${mail_account}' ALIAS='' AUTOREPLY='no' FWD='' FWD_ONLY='' MD5='{SHA512-CRYPT}$pass' QUOTA='unlimited' U_DISK='0' SUSPENDED='no' TIME='$time' DATE='$date'"
 						escaped=$(printf '%s\n' "$newline" | sed -e 's/[\/&]/\\&/g')
 						escaped2=$(printf '%s\n' "$newline2" | sed -e 's/[\/&]/\\&/g')
-						sed -i "s/^${mail_account}:.*/$escaped/g" /home/${new_user}/conf/mail/${folder}/passwd
-						sed -i "s/^ACCOUNT='${mail_account}.*/$escaped2/g" /usr/local/hestia/data/users/${new_user}/mail/${folder}.conf
+					sed -i "s/^${mail_account}:.*/$escaped/g" "/home/${new_user}/conf/mail/${folder}/passwd"
+					sed -i "s/^ACCOUNT='${mail_account}.*/$escaped2/g" "/usr/local/hestia/data/users/${new_user}/mail/${folder}.conf"
 					else
 						echo "Warning: Password for $mail_account@$folder not found in shadow file."
 					fi
@@ -385,30 +438,31 @@ for folder in *; do
 				fi
 			done
 			cd ..
-			$BIN/v-rebuild-mail-domain $new_user $folder
+			$BIN/v-rebuild-mail-domain "$new_user" "$folder"
 		fi
 	fi
 done
 
 if [ "$mx" = 'yes' ]; then
-	cd $main_dir/dnszones
-	for domain in $($BIN/v-list-mail-domains $new_user plain | awk '{ print  $1 }'); do
+	cd "$main_dir/dnszones" || exit 3
+	while read -r domain; do
+		is_domain_format_valid "$domain" "mail domain"
 		echo "Replace MX record for $domain"
-		mx_id=$(grep MX $HESTIA/data/users/${new_user}/dns/${domain}.conf | tr "'" " " | cut -d " " -f 2)
-		$BIN/v-delete-dns-record $new_user $domain $mx_id
-		grep MX ${domain}.db | awk '{for(sk=NF;sk>=1;sk--) printf "%s ", $sk;print ""}' | while read value pri ns rest; do
+		mx_id=$(grep MX "$HESTIA/data/users/${new_user}/dns/${domain}.conf" | tr "'" " " | cut -d " " -f 2)
+		$BIN/v-delete-dns-record "$new_user" "$domain" "$mx_id"
+		grep MX "${domain}.db" | awk '{for(sk=NF;sk>=1;sk--) printf "%s ", $sk;print ""}' | while read -r value pri ns rest; do
 			if [ "$ns" = "MX" ]; then
 				if [ "$value" == "$sk_mx" ] || [ "$value" == "$sk_mx." ]; then
 					value=mail.$value
 				fi
-				$BIN/v-add-dns-record $new_user $domain @ MX $value $pri
+				$BIN/v-add-dns-record "$new_user" "$domain" @ MX "$value" "$pri"
 				if [[ "$?" -ge "1" ]]; then
-					$BIN/v-add-dns-record $new_user $domain @ MX mail.${domain} 0
+					$BIN/v-add-dns-record "$new_user" "$domain" @ MX "mail.${domain}" 0
 				fi
 				echo "MX fixed in $sk_mx"
 			fi
 		done
-	done
+	done < <($BIN/v-list-mail-domains "$new_user" plain | awk '{ print $1 }')
 fi
 
 ##################
@@ -465,7 +519,8 @@ else
 	echo "No cron jobs file found or it is empty for user $new_user."
 fi
 
-rm -rf "$tmpdir"
+cleanup_import
+trap - EXIT
 
 echo "##############################"
 echo "cPanel Backup restored"

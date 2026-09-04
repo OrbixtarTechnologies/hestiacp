@@ -6,6 +6,10 @@ export default function handleGlobalToolSearch() {
 	if (!form || !input || options.length === 0) {
 		return;
 	}
+	if (form.dataset.orbixSearchReady === 'true') {
+		return;
+	}
+	form.dataset.orbixSearchReady = 'true';
 
 	const findDestination = () => {
 		const query = input.value.trim().toLocaleLowerCase();

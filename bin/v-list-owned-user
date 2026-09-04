@@ -1,0 +1,30 @@
+#!/bin/bash
+# info: list one hosting account visible to an administrator or reseller
+# options: USER ACCOUNT [FORMAT]
+#
+# example: v-list-owned-user admin example json
+
+user=$1
+account=$2
+format=${3-json}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '2' "$#" 'USER ACCOUNT [FORMAT]'
+is_format_valid 'user' 'format'
+is_user_format_valid "$account" 'account'
+is_object_valid 'user' 'USER' "$user"
+is_object_valid 'user' 'ACCOUNT' "$account"
+
+if [ "$account" = "$ROOT_USER" ]; then
+	check_result "$E_FORBIDEN" "user $account is not a hosting account"
+fi
+
+if [ "$user" != "$ROOT_USER" ]; then
+	is_reseller_valid "$user"
+	is_reseller_user_valid "$user" "$account"
+fi
+
+exec "$BIN/v-list-user" "$account" "$format"

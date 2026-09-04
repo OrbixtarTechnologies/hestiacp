@@ -1,0 +1,84 @@
+#!/bin/bash
+# info: register a pinned-TLS OrbixPanel fleet node
+# options: NAME HOST PORT TLS_PIN ACCESS_KEY SECRET_FILE
+#
+# example: v-add-fleet-node edge-1 panel.example.com 8083 sha256//BASE64 ACCESS /tmp/fleet-secret
+
+name=$1
+host=$2
+port=$3
+tls_pin=$4
+access_key=$5
+secret_file=$6
+HIDE=6
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source "$HESTIA/func/fleet.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '6' "$#" 'NAME HOST PORT TLS_PIN ACCESS_KEY SECRET_FILE'
+check_hestia_demo_mode
+fleet_validate_name "$name"
+if [[ ! "$host" =~ ^[A-Za-z0-9]([A-Za-z0-9.-]{0,251}[A-Za-z0-9])?$ ]]; then
+	check_result "$E_INVALID" "Enter a valid DNS name or IPv4 address"
+fi
+if [[ ! "$port" =~ ^[0-9]{1,5}$ ]] || ((port < 1 || port > 65535)); then
+	check_result "$E_INVALID" "Enter a valid HTTPS port"
+fi
+if [[ ! "$tls_pin" =~ ^sha256//[A-Za-z0-9+/]{43}=$ ]]; then
+	check_result "$E_INVALID" "Enter a curl SHA256 public-key pin in sha256//BASE64 format"
+fi
+is_access_key_id_format_valid "$access_key" 'access key'
+secret_realpath=$(realpath -e -- "$secret_file" 2> /dev/null || true)
+if [[ "$secret_realpath" != /tmp/* || -L "$secret_file" || ! -f "$secret_realpath" ]] \
+	|| [[ $(stat -c '%s' "$secret_realpath" 2> /dev/null || echo 0) -gt 100 ]]; then
+	check_result "$E_FORBIDEN" "The fleet secret must be provided in a small regular file under /tmp"
+fi
+secret_key=$(tr -d '\r\n' < "$secret_realpath")
+is_secret_access_key_format_valid "$secret_key" 'secret key'
+
+fleet_prepare_dirs
+config="$fleet_nodes_dir/$name.conf"
+if [ -e "$config" ]; then
+	check_result "$E_EXISTS" "Fleet node $name already exists"
+fi
+
+NAME=$name
+HOST=$host
+PORT=$port
+TLS_PIN=$tls_pin
+ACCESS_KEY=$access_key
+SECRET_KEY=$secret_key
+snapshot=$(fleet_collect_snapshot "$name") \
+	|| check_result "$E_CONNECT" "Pinned TLS, access-key authentication, or fleet-read permissions failed"
+
+time=$(date '+%T')
+date=$(date '+%F')
+temporary_config=$(mktemp "$fleet_nodes_dir/.${name}.XXXXXX")
+temporary_cache=$(mktemp "$fleet_cache_dir/.${name}.XXXXXX")
+cleanup() {
+	rm -f -- "$temporary_config" "$temporary_cache"
+}
+trap cleanup EXIT
+
+cat > "$temporary_config" << EOF
+NAME='$name'
+HOST='$host'
+PORT='$port'
+TLS_PIN='$tls_pin'
+ACCESS_KEY='$access_key'
+SECRET_KEY='$secret_key'
+TIME='$time'
+DATE='$date'
+EOF
+printf '%s\n' "$snapshot" > "$temporary_cache"
+chmod 600 "$temporary_config"
+chmod 640 "$temporary_cache"
+mv -f -- "$temporary_config" "$config"
+mv -f -- "$temporary_cache" "$fleet_cache_dir/$name.json"
+
+"$BIN/v-log-action" "system" "Warning" "System" "Fleet node registered (Node: $name, Host: $host:$port)."
+log_event "$OK" "$ARGUMENTS"
+trap - EXIT
+exit 0

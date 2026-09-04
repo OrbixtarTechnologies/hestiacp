@@ -58,6 +58,9 @@ $v_twofa = $data[$v_username]["TWOFA"];
 $v_qrcode = $data[$v_username]["QRCODE"];
 $v_phpcli = $data[$v_username]["PHPCLI"];
 $v_role = $data[$v_username]["ROLE"];
+$v_reseller = $data[$v_username]["RESELLER"] ?? "no";
+$v_reseller_max_users = $data[$v_username]["RESELLER_MAX_USERS"] ?? "0";
+$v_reseller_packages = array_filter(explode(",", $data[$v_username]["RESELLER_PACKAGES"] ?? ""));
 $v_login_disabled = $data[$v_username]["LOGIN_DISABLED"];
 $v_login_use_iplist = $data[$v_username]["LOGIN_USE_IPLIST"];
 $v_login_allowed_ips = $data[$v_username]["LOGIN_ALLOW_IPS"];
@@ -315,6 +318,34 @@ if (!empty($_POST["save"])) {
 	}
 
 	if ($_SESSION["userContext"] === "admin") {
+		$requested_reseller = !empty($_POST["v_reseller"]) ? "yes" : "no";
+		$requested_reseller_packages = array_values(
+			array_intersect(array_keys($packages), $_POST["v_reseller_packages"] ?? []),
+		);
+		$requested_reseller_limit = $_POST["v_reseller_max_users"] ?? "0";
+		if ($requested_reseller === "no") {
+			$requested_reseller_limit = "0";
+			$requested_reseller_packages = [];
+		}
+
+		if (
+			$requested_reseller === "yes" &&
+			($_POST["v_role"] ?? "user") !== "user" &&
+			empty($_SESSION["error_msg"])
+		) {
+			$_SESSION["error_msg"] = _("A reseller must keep the User role.");
+		}
+
+		if (
+			$v_reseller === "yes" &&
+			($_POST["v_role"] ?? "user") !== "user" &&
+			empty($_SESSION["error_msg"])
+		) {
+			$_SESSION["error_msg"] = _(
+				"Disable reseller delegation before changing this user's role.",
+			);
+		}
+
 		// Change package (admin only)
 		if (
 			$v_package != $_POST["v_package"] &&
@@ -373,6 +404,35 @@ if (!empty($_POST["save"])) {
 				check_return_code($return_var, $output);
 				unset($output);
 				$v_role = $_POST["v_role"];
+			}
+		}
+
+		if (
+			$v_username !== $_SESSION["ROOT_USER"] &&
+			empty($_SESSION["error_msg"]) &&
+			($v_reseller !== $requested_reseller ||
+				(string) $v_reseller_max_users !== (string) $requested_reseller_limit ||
+				implode(",", $v_reseller_packages) !== implode(",", $requested_reseller_packages))
+		) {
+			exec(
+				HESTIA_CMD .
+					"v-change-user-reseller " .
+					quoteshellarg($v_username) .
+					" " .
+					quoteshellarg($requested_reseller) .
+					" " .
+					quoteshellarg($requested_reseller_limit) .
+					" " .
+					quoteshellarg(implode(",", $requested_reseller_packages)),
+				$output,
+				$return_var,
+			);
+			check_return_code($return_var, $output);
+			unset($output);
+			if (empty($_SESSION["error_msg"])) {
+				$v_reseller = $requested_reseller;
+				$v_reseller_max_users = $requested_reseller_limit;
+				$v_reseller_packages = $requested_reseller_packages;
 			}
 		}
 		// Change shell (admin only)

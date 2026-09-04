@@ -524,7 +524,7 @@
 									<?= tohtml( _("phpMyAdmin Single Sign On")) ?>
 									<span class="hint">
 										<a
-											href="https://hestiacp.com/docs/server-administration/databases.html"
+											href="https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/docs/docs/server-administration/databases.md"
 											target="_blank"
 										>
 											(<?= tohtml( _("More info")) ?>)
@@ -547,9 +547,9 @@
 							</div>
 							<div class="u-mb10">
 								<label for="v_pma_restrict" class="form-label">
-									<?= tohtml( _("Restrict phpMyAdmin to Hestia login")) ?>
+									<?= tohtml(sprintf(_("Restrict phpMyAdmin to %s login"), get_panel_name())) ?>
 									<span class="hint">
-										<?= tohtml( _("Blocks phpMyAdmin's own login form; only reachable via the phpMyAdmin link inside Hestia (requires SSO above).")) ?>
+										<?= tohtml(sprintf(_("Blocks phpMyAdmin's own login form; only reachable via the phpMyAdmin link inside %s (requires SSO above)."), get_panel_name())) ?>
 									</span>
 								</label>
 								<select
@@ -697,7 +697,7 @@
 						<label for="v_backup_mode" class="form-label">
 							<?= tohtml( _("Compression")) ?>
 							<a
-								href="https://hestiacp.com/docs/server-administration/backup-restore.html#what-is-the-difference-between-zstd-and-gzip"
+								href="https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/docs/docs/server-administration/backup-restore.md#what-is-the-difference-between-zstd-and-gzip"
 								target="_blank"
 								class="u-ml5"
 							>
@@ -717,7 +717,7 @@
 						<label for="v_backup_gzip" class="form-label">
 							<?= tohtml( _("Compression Level")) ?>
 							<a
-								href="https://hestiacp.com/docs/server-administration/backup-restore.html#what-is-the-optimal-compression-ratio"
+								href="https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/docs/docs/server-administration/backup-restore.md#what-is-the-optimal-compression-ratio"
 								target="_blank"
 								class="u-ml5"
 							>
@@ -740,7 +740,7 @@
 						<label for="v_backup_dir" class="form-label">
 							<?= tohtml( _("Directory")) ?>
 							<a
-								href="https://hestiacp.com/docs/server-administration/backup-restore.html#how-to-change-default-backup-folder"
+								href="https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/docs/docs/server-administration/backup-restore.md#how-to-change-default-backup-folder"
 								target="_blank"
 								class="u-ml5"
 							>
@@ -773,7 +773,7 @@
 							<label for="backup_type" class="form-label">
 								<?= tohtml( _("Protocol")) ?>
 								<a
-									href="https://hestiacp.com/docs/server-administration/backup-restore.html#what-kind-of-protocols-are-currently-supported"
+									href="https://github.com/OrbixtarTechnologies/orbixtar-panel/blob/main/docs/docs/server-administration/backup-restore.md#what-kind-of-protocols-are-currently-supported"
 									target="_blank"
 									class="u-ml5"
 								>

@@ -1,0 +1,55 @@
+#!/bin/bash
+# info: list safe SSL certificate metadata for a web domain
+# options: USER DOMAIN
+#
+# example: v-list-web-domain-ssl-status admin example.com
+
+user=$1
+domain=$2
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_hestia_demo_mode
+check_args '2' "$#" 'USER DOMAIN'
+is_format_valid 'user' 'domain'
+is_object_valid 'user' 'USER' "$user"
+is_object_valid 'web' 'DOMAIN' "$domain"
+
+certificate="$USER_DATA/ssl/$domain.crt"
+
+json_escape() {
+	printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g'
+}
+
+subject=''
+issuer=''
+not_before=''
+not_after=''
+aliases=''
+fingerprint=''
+
+if [[ -f "$certificate" && ! -L "$certificate" ]]; then
+	subject=$(openssl x509 -noout -subject -nameopt RFC2253 -in "$certificate" | sed 's/^subject=//')
+	issuer=$(openssl x509 -noout -issuer -nameopt RFC2253 -in "$certificate" | sed 's/^issuer=//')
+	not_before=$(openssl x509 -noout -startdate -in "$certificate" | sed 's/^notBefore=//')
+	not_after=$(openssl x509 -noout -enddate -in "$certificate" | sed 's/^notAfter=//')
+	aliases=$(openssl x509 -noout -ext subjectAltName -in "$certificate" 2> /dev/null | sed -n 's/^[[:space:]]*//; /DNS:/p' | sed 's/DNS://g; s/, /,/g')
+	fingerprint=$(openssl x509 -noout -fingerprint -sha256 -in "$certificate" | sed 's/^sha256 Fingerprint=//')
+fi
+
+cat << JSON
+{
+	"$domain": {
+		"SUBJECT": "$(json_escape "$subject")",
+		"ISSUER": "$(json_escape "$issuer")",
+		"NOT_BEFORE": "$(json_escape "$not_before")",
+		"NOT_AFTER": "$(json_escape "$not_after")",
+		"ALIASES": "$(json_escape "$aliases")",
+		"FINGERPRINT": "$(json_escape "$fingerprint")"
+	}
+}
+JSON
+
+exit 0

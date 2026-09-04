@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version 1.9.0
+# OrbixPanel upgrade script for target version 1.9.0
 
 #######################################################################################
 #######                      Place additional commands below.                   #######
@@ -118,7 +118,7 @@ if [ -x /usr/bin/mariadb ]; then
 	sed -i 's|/usr/share/mysql|/usr/share/mariadb|g' /etc/mysql/my.cnf
 fi
 
-$BIN/v-add-user-notification 'admin' 'Hestia security has been upgraded' ' A new user "hestiaweb" has been created and is used for login. Make sure other Hestia packages are updated as well otherwise the system may not work as expected.'
-add_upgrade_message 'Security has been upgraded, A new user "hestiaweb" has been created and is used for login. Make sure other Hestia packages are updated as well otherwise the system may not work as expected.'
+$BIN/v-add-user-notification 'admin' 'OrbixPanel security has been upgraded' ' A new user "hestiaweb" has been created and is used for login. Make sure other OrbixPanel packages are updated as well otherwise the system may not work as expected.'
+add_upgrade_message 'Security has been upgraded. A new user "hestiaweb" has been created and is used for login. Make sure other OrbixPanel packages are updated as well; otherwise, the system may not work as expected.'
 # Ensures proper permissions for Hestia service interactions.
 /usr/sbin/adduser hestiamail hestia-users

@@ -16,13 +16,13 @@ To manage your mail domains, navigate to the **Mail <i class="fas fa-fw fa-mail-
 3. Edit the fields.
 4. Click the **<i class="fas fa-fw fa-save"></i> Save** button in the top right.
 
-## Suspending a web domain
+## Suspending a mail domain
 
 1. Hover over the domain you want to suspend.
 2. Click the <i class="fas fa-fw fa-pause"><span class="visually-hidden">suspend</span></i> icon on the right of the mail domain.
 3. To unsuspend it, click the <i class="fas fa-fw fa-play"><span class="visually-hidden">unsuspend</span></i> icon on the right of the mail domain.
 
-## Deleting a web domain
+## Deleting a mail domain
 
 1. Hover over the domain you want to delete.
 2. Click the <i class="fas fa-fw fa-trash"><span class="visually-hidden">delete</span></i> icon on the right of the mail domain. Both the mail domain and **all** the mail accounts will get deleted.
@@ -85,7 +85,20 @@ This option allows the user to use a different SMTP relay than server defined on
 
 ### Get DNS records
 
-If you don’t host your DNS in Hestia, but you still want to use its email service, click the <i class="fas fa-atlas"><span class="visually-hidden">DNS</span></i> icon to view the DNS records you need to add to your DNS provider.
+If you don’t host your DNS in OrbixPanel, but you still want to use its email service, click the <i class="fas fa-atlas"><span class="visually-hidden">DNS</span></i> icon to view the DNS records you need to add to your DNS provider.
+
+### Check email deliverability
+
+Open **Email Deliverability** from the Mail toolbar or account dashboard. Select a mail domain and run the check to query its public DNS records.
+
+OrbixPanel reports four independent results:
+
+- **MX** confirms that incoming mail has a published destination.
+- **SPF** confirms that the domain publishes an authorized-sender policy.
+- **DKIM** confirms that the `mail` selector publishes a signing key when DKIM is enabled.
+- **DMARC** confirms that receiving providers can find an authentication policy.
+
+If a check fails, open **Required Records**, publish the shown record at the authoritative DNS provider, wait for DNS propagation, and run the check again. A successful DNS check confirms publication, but it does not guarantee inbox placement; sender reputation and message content still matter.
 
 ### Webmail
 

@@ -1,0 +1,50 @@
+#!/bin/bash
+# info: list accounts directly owned by a reseller
+# options: RESELLER [FORMAT]
+#
+# example: v-list-reseller-users agency json
+
+reseller=$1
+format=${2-shell}
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+
+check_args '1' "$#" 'RESELLER [FORMAT]'
+is_user_format_valid "$reseller" 'reseller'
+is_reseller_valid "$reseller"
+
+list_users() {
+	grep -l "^OWNER='$reseller'$" "$HESTIA"/data/users/*/user.conf 2> /dev/null | while read -r conf; do
+		basename "$(dirname "$conf")"
+	done | sort
+}
+
+json_list() {
+	echo '{'
+	separator=''
+	while read -r managed_user; do
+		[ -z "$managed_user" ] && continue
+		source_conf "$HESTIA/data/users/$managed_user/user.conf"
+		echo -n "$separator    \"$managed_user\": {\"NAME\": \"$NAME\", \"CONTACT\": \"$CONTACT\", \"PACKAGE\": \"$PACKAGE\", \"SUSPENDED\": \"$SUSPENDED\", \"U_DISK\": \"$U_DISK\", \"U_BANDWIDTH\": \"$U_BANDWIDTH\", \"U_WEB_DOMAINS\": \"$U_WEB_DOMAINS\", \"U_MAIL_DOMAINS\": \"$U_MAIL_DOMAINS\", \"DATE\": \"$DATE\"}"
+		separator=",\n"
+	done < <(list_users)
+	echo
+	echo '}'
+}
+
+case "$format" in
+	json) json_list ;;
+	list) list_users ;;
+	*)
+		echo 'USER PACKAGE WEB MAIL DISK BANDWIDTH SUSPENDED'
+		while read -r managed_user; do
+			[ -z "$managed_user" ] && continue
+			source_conf "$HESTIA/data/users/$managed_user/user.conf"
+			echo "$managed_user $PACKAGE $U_WEB_DOMAINS $U_MAIL_DOMAINS $U_DISK $U_BANDWIDTH $SUSPENDED"
+		done < <(list_users) | column -t
+		;;
+esac
+
+exit

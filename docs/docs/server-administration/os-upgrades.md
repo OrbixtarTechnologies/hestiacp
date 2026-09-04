@@ -1,7 +1,7 @@
 # Operating system upgrades
 
 ::: danger
-Before upgrading your operating system make sure to make a backup! We do not provide support for broken operating system installations. We only provide this page for information about Hestia issues that may come up while upgrading.
+Before upgrading your operating system make sure to make a backup! We do not provide support for broken operating system installations. We only provide this page for information about OrbixPanel issues that may come up while upgrading.
 :::
 
 ## General
@@ -10,7 +10,7 @@ Before upgrading your operating system make sure to make a backup! We do not pro
 Make sure to verify that MariaDB is running on a supported version for the new operating system. If that is not the case, update MariaDB version to a supported version before upgrading your OS!
 :::
 
-Once a backup has been made, update Hestia to the last supported version:
+Once a backup has been made, update OrbixPanel to the last supported version:
 
 ```bash
 apt update && apt upgrade
@@ -87,7 +87,7 @@ At this point, you can run the following command again to check for new configur
 find / -path /root -prune -o -type f -cmin -120 -regex '.*\.\(dpkg\|ucf\)-dist$' -print
 ```
 
-You may see a few files listed, but you should ignore most of them. Configuration files managed or modified by Hestia (such as `sshd`, `dovecot`, `bind`, `exim4`, etc.) should always be ignored. If you are unsure whether a file needs to be reviewed or merged, it is safest to leave it unchanged.
+You may see a few files listed, but you should ignore most of them. Configuration files managed or modified by OrbixPanel (such as `sshd`, `dovecot`, `bind`, `exim4`, etc.) should always be ignored. If you are unsure whether a file needs to be reviewed or merged, it is safest to leave it unchanged.
 
 ### Reboot the system
 
@@ -221,7 +221,7 @@ At this point, you can run the following command again to check for new configur
 find / -path /root -prune -o -type f -cmin -120 -regex '.*\.\(dpkg\|ucf\)-dist$' -print
 ```
 
-You may see a few files listed, but you should ignore most of them. Configuration files managed or modified by Hestia (such as `sshd`, `dovecot`, `bind`, `exim4`, etc.) should always be ignored. If you are unsure whether a file needs to be reviewed or merged, it is safest to leave it unchanged.
+You may see a few files listed, but you should ignore most of them. Configuration files managed or modified by OrbixPanel (such as `sshd`, `dovecot`, `bind`, `exim4`, etc.) should always be ignored. If you are unsure whether a file needs to be reviewed or merged, it is safest to leave it unchanged.
 
 ### Reboot the system
 

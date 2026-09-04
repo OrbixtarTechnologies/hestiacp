@@ -1,0 +1,179 @@
+#!/bin/bash
+# info: apply a tracked server-wide MultiPHP runtime profile
+# options: VERSIONS DEFAULT_VERSION
+#
+# example: v-start-runtime-profile 8.3,8.4,8.5 8.4
+
+versions=$1
+default_version=$2
+
+source /etc/hestiacp/hestia.conf
+source "$HESTIA/func/main.sh"
+source_conf "$HESTIA/conf/hestia.conf"
+source_conf "$HESTIA/install/upgrade/upgrade.conf"
+
+check_args '2' "$#" 'VERSIONS DEFAULT_VERSION'
+check_hestia_demo_mode
+
+if [ "$WEB_BACKEND" != 'php-fpm' ]; then
+	check_result "$E_DISABLED" "Runtime profiles require the php-fpm web backend"
+fi
+if [[ -z "$versions" || ${#versions} -gt 200 || ! "$versions" =~ ^[0-9]+\.[0-9]+(,[0-9]+\.[0-9]+)*$ ]]; then
+	check_result "$E_INVALID" "Select one or more comma-separated PHP versions"
+fi
+if [[ ! "$default_version" =~ ^[0-9]+\.[0-9]+$ ]]; then
+	check_result "$E_INVALID" "Select a valid default PHP version"
+fi
+
+IFS=',' read -r -a requested_versions <<< "$versions"
+declare -A selected=()
+normalized_versions=()
+for version in "${requested_versions[@]}"; do
+	if ! printf '%s\n' "${multiphp_v[@]}" | grep -Fxq -- "$version"; then
+		check_result "$E_INVALID" "PHP $version is not supported on this OrbixPanel release"
+	fi
+	if [[ -z "${selected[$version]:-}" ]]; then
+		selected[$version]=1
+		normalized_versions+=("$version")
+	fi
+done
+if [[ -z "${selected[$default_version]:-}" ]]; then
+	check_result "$E_INVALID" "The default PHP version must remain selected"
+fi
+if ((${#normalized_versions[@]} > 12)); then
+	check_result "$E_LIMIT" "A runtime profile supports at most 12 PHP versions"
+fi
+
+mapfile -t installed_versions < <("$BIN/v-list-sys-php" plain)
+for version in "${installed_versions[@]}"; do
+	[[ -n "$version" && -z "${selected[$version]:-}" ]] || continue
+	backend_template="PHP-${version/\./_}"
+	if grep -R -E -q "^[[:space:]]*BACKEND='([^']+-)?${backend_template}'" \
+		"$HESTIA"/data/users/*/web.conf 2> /dev/null; then
+		check_result "$E_INUSE" "PHP $version is assigned directly to one or more web domains"
+	fi
+done
+
+versions=$(printf '%s\n' "${normalized_versions[@]}" | sort -Vu | paste -sd, -)
+state_dir="/var/log/orbixpanel/runtime-profiles"
+mkdir -p "$state_dir"
+chmod 750 "$state_dir"
+
+exec 8> "$state_dir/submit.lock"
+flock -x 8
+for status_file in "$state_dir"/*.status; do
+	[[ -f "$status_file" ]] || continue
+	job_id=${status_file##*/}
+	job_id=${job_id%.status}
+	status=$(head -n 1 "$status_file" 2> /dev/null || true)
+	pid=$(head -n 1 "$state_dir/$job_id.pid" 2> /dev/null || true)
+	if [[ "$status" == queued || "$status" == running:* ]] \
+		&& [[ "$pid" =~ ^[0-9]+$ ]] \
+		&& kill -0 "$pid" 2> /dev/null; then
+		check_result "$E_INUSE" "Runtime profile job $job_id is already active"
+	fi
+done
+
+job_id="$(date '+%Y%m%d%H%M%S')-$$-$RANDOM"
+status_file="$state_dir/$job_id.status"
+log_file="$state_dir/$job_id.log"
+meta_file="$state_dir/$job_id.meta"
+result_file="$state_dir/$job_id.results"
+pid_file="$state_dir/$job_id.pid"
+started_at=$(date '+%FT%T%z')
+
+cleanup_pending=yes
+cleanup_incomplete_job() {
+	if [[ "$cleanup_pending" == yes ]]; then
+		rm -f -- "$status_file" "$log_file" "$meta_file" "$result_file" "$pid_file"
+	fi
+}
+trap cleanup_incomplete_job EXIT
+
+: > "$log_file"
+: > "$result_file"
+printf 'queued\n' > "$status_file"
+cat > "$meta_file" << EOF
+JOB_ID=$job_id
+VERSIONS=$versions
+DEFAULT_VERSION=$default_version
+STARTED=$started_at
+EOF
+
+nohup /bin/bash -c '
+	status_file=$1
+	log_file=$2
+	result_file=$3
+	lock_file=$4
+	bin=$5
+	versions=$6
+	default_version=$7
+
+	exec 9>"$lock_file"
+	if ! flock -n 9; then
+		printf "failed:another runtime profile job is active\n" > "$status_file"
+		exit 1
+	fi
+
+	fail_step() {
+		local step=$1
+		local exit_code=$2
+		printf "failed:%s:%s\n" "$step" "$exit_code" > "$status_file"
+		printf "failed %s %s\n" "$step" "$exit_code" >> "$result_file"
+		exit "$exit_code"
+	}
+
+	declare -A selected=()
+	IFS="," read -r -a desired <<< "$versions"
+	for version in "${desired[@]}"; do selected[$version]=1; done
+	mapfile -t installed < <("$bin/v-list-sys-php" plain)
+
+	for version in "${desired[@]}"; do
+		if printf "%s\n" "${installed[@]}" | grep -Fxq -- "$version"; then
+			printf "kept %s\n" "$version" >> "$result_file"
+			continue
+		fi
+		printf "running:install:%s\n" "$version" > "$status_file"
+		printf "\n== Install PHP %s ==\n" "$version" >> "$log_file"
+		timeout 2400 "$bin/v-add-web-php" "$version" >> "$log_file" 2>&1 \
+			|| fail_step "install-$version" "$?"
+		printf "installed %s\n" "$version" >> "$result_file"
+	done
+
+	current_default=$("$bin/v-list-default-php" plain | head -n 1)
+	if [[ "$current_default" != "$default_version" ]]; then
+		printf "running:default:%s\n" "$default_version" > "$status_file"
+		printf "\n== Set default PHP %s ==\n" "$default_version" >> "$log_file"
+		timeout 1200 "$bin/v-change-sys-php" "$default_version" >> "$log_file" 2>&1 \
+			|| fail_step "default-$default_version" "$?"
+		printf "default %s\n" "$default_version" >> "$result_file"
+	else
+		printf "default-kept %s\n" "$default_version" >> "$result_file"
+	fi
+
+	mapfile -t installed < <("$bin/v-list-sys-php" plain)
+	for version in "${installed[@]}"; do
+		[[ -n "$version" && -z "${selected[$version]:-}" ]] || continue
+		printf "running:remove:%s\n" "$version" > "$status_file"
+		printf "\n== Remove PHP %s ==\n" "$version" >> "$log_file"
+		timeout 2400 "$bin/v-delete-web-php" "$version" >> "$log_file" 2>&1 \
+			|| fail_step "remove-$version" "$?"
+		printf "removed %s\n" "$version" >> "$result_file"
+	done
+
+	printf "completed\n" > "$status_file"
+' orbixpanel-runtime-profile "$status_file" "$log_file" "$result_file" \
+	"$state_dir/apply.lock" "$BIN" "$versions" "$default_version" < /dev/null &
+
+job_pid=$!
+printf '%s\n' "$job_pid" > "$pid_file"
+chmod 640 "$status_file" "$log_file" "$meta_file" "$result_file" "$pid_file"
+cleanup_pending=no
+flock -u 8
+
+"$BIN/v-log-action" "system" "Warning" "System" \
+	"Runtime profile job started (Job: $job_id, Versions: $versions, Default: $default_version)."
+log_event "$OK" "$ARGUMENTS"
+
+echo "$job_id"
+exit 0

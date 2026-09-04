@@ -32,6 +32,10 @@ json_list() {
 		if [ $i -gt 1 ]; then
 			echo ","
 		fi
+		OWNER=''
+		RESELLER='no'
+		RESELLER_MAX_USERS='0'
+		RESELLER_PACKAGES=''
 		source_conf "$HESTIA/data/users/$USER/user.conf"
 		echo -n '    "'$USER'": {
         "NAME": "'$NAME'",
@@ -61,6 +65,10 @@ json_list() {
         "CRON_REPORTS": "'$CRON_REPORTS'",
         "RKEY": "'$RKEY'",
         "ROLE": "'$ROLE'",
+        "OWNER": "'${OWNER:-$ROOT_USER}'",
+        "RESELLER": "'${RESELLER:-no}'",
+        "RESELLER_MAX_USERS": "'${RESELLER_MAX_USERS:-0}'",
+        "RESELLER_PACKAGES": "'$RESELLER_PACKAGES'",
         "SUSPENDED": "'$SUSPENDED'",
         "SUSPENDED_USERS": "'$SUSPENDED_USERS'",
         "SUSPENDED_WEB": "'$SUSPENDED_WEB'",

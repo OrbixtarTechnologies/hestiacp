@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Hestia Control Panel upgrade script for target version 1.0.2
+# OrbixPanel upgrade script for target version 1.0.2
 
 #######################################################################################
 #######                      Place additional commands below.                   #######
@@ -29,7 +29,7 @@ if [ "$IMAP_SYSTEM" = "dovecot" ]; then
 fi
 
 # Update DNS resolvers in hestia-nginx's configuration
-echo "[ * ] Updating DNS resolvers for Hestia Internal Web Server..."
+echo "[ * ] Updating DNS resolvers for the OrbixPanel internal web server..."
 dns_resolver=$(cat /etc/resolv.conf | grep -i '^nameserver' | cut -d ' ' -f2 | tr '\r\n' ' ' | xargs)
 for ip in $dns_resolver; do
 	if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -49,11 +49,11 @@ fi
 
 # Remove old hestia.conf files from Apache & NGINX if they exist
 if [ -f "/etc/apache2/conf.d/hestia.conf" ]; then
-	echo "[ * ] Removing old Apache configuration file from previous version of Hestia Control Panel..."
+	echo "[ * ] Removing old Apache configuration file from previous version of OrbixPanel..."
 	rm -f /etc/apache2/conf.d/hestia.conf
 fi
 if [ -f "/etc/nginx/conf.d/hestia.conf" ]; then
-	echo "[ * ] Removing old NGINX configuration file from previous version of Hestia Control Panel..."
+	echo "[ * ] Removing old NGINX configuration file from previous version of OrbixPanel..."
 	rm -f /etc/nginx/conf.d/hestia.conf
 fi
 
